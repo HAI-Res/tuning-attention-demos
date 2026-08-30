@@ -44,6 +44,10 @@ async def test_websocket_hello_then_samples():
             # proves the samples were processed, not merely queued.
             got = await (await c.get("/health")).json()
         assert got["devices"][0]["label"] == "Ada"
+        accel = got["devices"][0]["channels"]["accel"]
+        assert accel["count"] == 3
+        assert accel["latest"] == [0.0, 0.0, 3.0]
+        assert accel["axes"] == ["x", "y", "z"]
         assert hub.devices["p1"].rates["accel"].count == 3
         assert hub.latest("p1", "accel").values == (0.0, 0.0, 3.0)
     finally:

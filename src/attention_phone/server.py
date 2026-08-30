@@ -15,6 +15,7 @@ from pathlib import Path
 from aiohttp import web
 
 from .hub import HUB, SensorHub
+from .model import AXES
 from .sources.sensorlogger import push_handler
 from .sources.web import websocket_handler
 
@@ -51,8 +52,19 @@ async def _health(request: web.Request) -> web.Response:
         {
             "ok": True,
             "devices": [
-                {"device": d.device, "label": d.label, "sensors": d.sensors,
-                 "hz": round(max((r.hz for r in d.rates.values()), default=0.0), 1)}
+                {
+                    "device": d.device,
+                    "label": d.label,
+                    "age": round(d.age, 1),
+                    "channels": {
+                        sensor: {
+                            **d.rates[sensor].stats(),
+                            "latest": [round(v, 4) for v in d.latest[sensor].values],
+                            "axes": AXES.get(sensor, ()),
+                        }
+                        for sensor in d.sensors
+                    },
+                }
                 for d in hub.live()
             ],
         }

@@ -47,6 +47,25 @@ class RateMeter:
     def intervals_ms(self) -> list[float]:
         return [(b - a) * 1e3 for a, b in zip(self._t, list(self._t)[1:], strict=False)]
 
+    def stats(self) -> dict[str, float]:
+        """Structured version of `summary`, for /health.
+
+        p95 and worst are the interesting ones: wifi delivers a steady 100 Hz
+        stream as bursts, and a median that looks perfect can hide a worst-case
+        interval long enough to be audible in a movement-to-sound mapping.
+        """
+        iv = self.intervals_ms
+        if len(iv) < 2:
+            return {"hz": round(self.hz, 1), "count": self.count}
+        iv_sorted = sorted(iv)
+        return {
+            "hz": round(self.hz, 1),
+            "count": self.count,
+            "median_ms": round(statistics.median(iv), 1),
+            "p95_ms": round(iv_sorted[int(len(iv_sorted) * 0.95) - 1], 1),
+            "worst_ms": round(max(iv), 1),
+        }
+
     def summary(self) -> str:
         iv = self.intervals_ms
         if len(iv) < 2:
