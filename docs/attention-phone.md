@@ -164,8 +164,13 @@ The web page is the one built for the class, but the hub takes anything.
 set its HTTP Push URL to `https://10-0-0-184.local-ip.sh:8443/sensorlogger`.
 Worth it for sensors the browser cannot reach — barometer, pedometer, heart
 rate, **AirPods head motion** — and because it writes a full-rate local
-recording at the same time. Its batching means ~200 ms of latency, so it is a
-data-collection path, not a gesture-to-sound path.
+recording at the same time.
+
+It does stream live, and each push carries every sample in the window at full
+sensor rate, so nothing is lost. But the batch period **defaults to one
+second**, and making it shorter is a paid Plus/Pro feature. That makes it a
+data-collection path, not a gesture-to-sound path — use the web page when a
+movement needs to be heard as it happens.
 
 **phyphox** (free, open source, RWTH Aachen) is the reverse direction: the
 laptop polls the phone's own webserver, port 80 on iOS. Occasionally the only

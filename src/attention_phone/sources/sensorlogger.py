@@ -6,9 +6,16 @@ browser cannot (barometer, pedometer, AirPods head motion, heart rate), and
 it writes a full-rate local recording at the same time — so the live stream
 and the archive agree.
 
-The cost is latency.  Samples are batched over a configurable period, ~200 ms
-at the fastest, so this is a data-collection path, not a
-gesture-to-sound path.  Each POST body looks like::
+The cost is latency, and it is worse than it first looks.  Each POST carries
+*every* sample recorded in the batch window at the sensor's full rate, so no
+data is lost — but the batch period **defaults to one second**, and changing it
+is a paid (Plus/Pro) feature.  Sensor Logger's own README quotes 200 ms, which
+is most likely the floor of that paid range rather than the free default.
+
+So: a data-collection path, not a gesture-to-sound path.  For anything where a
+movement should be heard as it happens, use the web sender page instead.
+
+Each POST body looks like::
 
     {"messageId": 12, "sessionId": "...", "deviceId": "...",
      "payload": [{"name": "accelerometer", "time": 1698501144401773000,
