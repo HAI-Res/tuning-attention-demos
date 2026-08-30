@@ -56,6 +56,8 @@ async def _health(request: web.Request) -> web.Response:
                     "device": d.device,
                     "label": d.label,
                     "age": round(d.age, 1),
+                    "connected": d.connected,
+                    "silent": d.silent,
                     "channels": {
                         sensor: {
                             **d.rates[sensor].stats(),

@@ -98,6 +98,7 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
 
     stats = WebClientStats()
     device = ""
+    attached = False
     peer = request.remote or "?"
     log.info("websocket open from %s", peer)
 
@@ -125,7 +126,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                 device = str(hello.get("d") or "")
                 label = str(hello.get("n") or device)
                 if device:
-                    hub.label(device, label)
+                    hub.attach(device, label)
+                    attached = True
                     log.info("%s (%s) joined from %s", label, device, peer)
                 continue
 
@@ -136,6 +138,8 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                     pass
             hub.publish_all(parse_sample(payload))
     finally:
+        if attached:
+            hub.detach(device)
         log.info(
             "websocket closed (%s): %d messages, %d dropped in transit",
             device or peer, stats.messages, stats.gaps,

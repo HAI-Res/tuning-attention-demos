@@ -88,6 +88,12 @@ class DeviceState:
         self.last_seen = self.first_seen
         self.latest: dict[str, Reading] = {}
         self.rates: dict[str, RateMeter] = {}
+        self.sockets = 0
+        """Open connections from this device. A phone that has announced itself
+        but has every sensor switched off — or whose AirPods are not connected —
+        sends nothing at all, and used to vanish from the display after the
+        stale timeout. "Connected but silent" is the single most useful state to
+        be able to see, so it is tracked separately from data arriving."""
 
     def record(self, r: Reading) -> None:
         self.last_seen = r.recv
@@ -102,6 +108,15 @@ class DeviceState:
     @property
     def sensors(self) -> list[str]:
         return sorted(self.latest)
+
+    @property
+    def connected(self) -> bool:
+        return self.sockets > 0
+
+    @property
+    def silent(self) -> bool:
+        """Connected, but nothing has ever arrived."""
+        return self.connected and not self.latest
 
 
 class SensorHub:
@@ -137,16 +152,39 @@ class SensorHub:
             self.publish(r)
 
     def label(self, device: str, label: str) -> None:
+        self._state(device).label = label
+
+    def _state(self, device: str) -> DeviceState:
         dev = self.devices.get(device)
         if dev is None:
             dev = self.devices[device] = DeviceState(device)
-        dev.label = label
+        return dev
+
+    def attach(self, device: str, label: str = "") -> None:
+        """A socket opened for this device."""
+        dev = self._state(device)
+        if label:
+            dev.label = label
+        dev.sockets += 1
+
+    def detach(self, device: str) -> None:
+        dev = self.devices.get(device)
+        if dev is not None:
+            dev.sockets = max(0, dev.sockets - 1)
 
     def live(self) -> list[DeviceState]:
-        """Devices heard from recently, oldest connection first, so a phone
-        keeps its row position on the display instead of jumping around."""
+        """Devices worth showing, oldest connection first so a phone keeps its
+        row instead of jumping around.
+
+        A device with an open socket stays listed even when no data has arrived,
+        because that is a state you need to diagnose rather than one to hide.
+        """
         return sorted(
-            (d for d in self.devices.values() if d.age <= self.stale_after),
+            (
+                d
+                for d in self.devices.values()
+                if d.connected or d.age <= self.stale_after
+            ),
             key=lambda d: d.first_seen,
         )
 

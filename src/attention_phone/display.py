@@ -73,6 +73,13 @@ class LiveDisplay:
         meter = d.rates.get(self.sensor)
         hz = meter.hz if meter else 0.0
         if r is None:
+            if d.silent:
+                # Connected and announced, but every channel is off or
+                # unavailable — the state worth naming rather than hiding.
+                return [
+                    f"  {BOLD}{name:<14}{RESET} {DIM}connected, sending nothing "
+                    f"— every channel is off or unavailable{RESET}"
+                ]
             avail = ",".join(d.sensors) or "none yet"
             return [f"  {BOLD}{name:<14}{RESET} {DIM}no {self.sensor} — has: {avail}{RESET}"]
 

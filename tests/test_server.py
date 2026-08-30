@@ -145,3 +145,42 @@ async def test_probe_page_is_served():
         assert "Generic Sensor" in body
     finally:
         await c.close()
+
+
+async def test_connected_but_silent_device_stays_visible():
+    # A phone whose channels are all off (or whose AirPods aren't connected)
+    # sends a hello and then nothing. That used to vanish after the stale
+    # timeout, making "connected but silent" indistinguishable from "never
+    # connected" — the one state you most need to see.
+    hub = SensorHub(stale_after=0.0)  # everything is instantly stale
+    c = await client_for(hub)
+    try:
+        async with c.ws_connect("/ws") as ws:
+            await ws.send_str(json.dumps({"hello": {"d": "p1", "n": "Ada"}}))
+            got = await (await c.get("/health")).json()
+            assert len(got["devices"]) == 1
+            row = got["devices"][0]
+            assert row["label"] == "Ada"
+            assert row["connected"] is True
+            assert row["silent"] is True
+            assert row["channels"] == {}
+        # After the socket closes it is stale and drops off.
+        got = await (await c.get("/health")).json()
+        assert got["devices"] == []
+    finally:
+        await c.close()
+
+
+async def test_a_device_with_data_is_not_marked_silent():
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        async with c.ws_connect("/ws") as ws:
+            await ws.send_str(json.dumps({"hello": {"d": "p1", "n": "Ada"}}))
+            await ws.send_str(json.dumps({"d": "p1", "q": 1, "t": 0, "s": {"accel": [1, 2, 3]}}))
+            got = await (await c.get("/health")).json()
+        row = got["devices"][0]
+        assert row["connected"] is True
+        assert row["silent"] is False
+    finally:
+        await c.close()
