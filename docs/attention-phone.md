@@ -156,6 +156,19 @@ packets/second, which neither the sender nor scsynth notices.
 SuperCollider's default language port, which had pushed `sclang` to 57121.
 Check `lsof -nP -iUDP:57120` before blaming the patch.
 
+## The native iOS app
+
+`ios/` holds a SwiftUI app that streams everything an iPhone exposes — including
+the two things the browser cannot reach: **AirPods head orientation**
+(`CMHeadphoneMotionManager`, up to 100 Hz) and **microphone onset detection**.
+It speaks the same WebSocket protocol as the sender page, so `phone-demo` takes
+it with no changes, and it can also send OSC/UDP straight to SuperCollider with
+no laptop-side server at all.
+
+See `ios/README.md` for building it and for the two iOS-specific traps
+(`NSLocalNetworkUsageDescription`, and `URLSessionWebSocketTask` not answering
+server pings) that cost real debugging time here.
+
 ## Other sources
 
 The web page is the one built for the class, but the hub takes anything.

@@ -67,3 +67,29 @@ def test_as_dict_names_the_axes():
     assert Reading("p", "attitude", 0, (10.0, 20.0, 30.0)).as_dict() == {
         "yaw": 10.0, "pitch": 20.0, "roll": 30.0
     }
+
+
+def test_every_channel_the_ios_app_sends_has_axes():
+    # The iOS app and the browser page both name channels from this table; a
+    # channel missing here silently loses its axis labels and cannot be picked
+    # with --sensor. Keep it in step with Channel.swift.
+    from attention_phone.model import AXES, VECTOR_SENSORS
+
+    ios_channels = {
+        "accel", "gravity", "gyro", "attitude", "quat", "mag",
+        "accelg", "gyroraw", "magraw",
+        "pressure", "location", "heading", "steps", "device",
+        "head", "headaccel", "audio",
+    }
+    assert ios_channels <= set(AXES), sorted(ios_channels - set(AXES))
+    # Vector sensors must be a subset, and must be genuinely 3-or-4-axis xyz.
+    assert VECTOR_SENSORS <= set(AXES)
+    for sensor in VECTOR_SENSORS:
+        assert AXES[sensor] == ("x", "y", "z"), (sensor, AXES[sensor])
+
+
+def test_non_vector_sensors_are_not_treated_as_vectors():
+    from attention_phone.model import VECTOR_SENSORS
+
+    for sensor in ("location", "attitude", "heading", "steps", "device", "quat", "audio"):
+        assert sensor not in VECTOR_SENSORS

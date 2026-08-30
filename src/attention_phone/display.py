@@ -14,6 +14,7 @@ import sys
 import time
 
 from .hub import DeviceState, SensorHub
+from .model import AXES, VECTOR_SENSORS
 
 RESET = "\033[0m"
 DIM = "\033[2m"
@@ -22,7 +23,10 @@ BOLD = "\033[1m"
 #: Full-scale value per sensor for the bar meter. Acceleration: 20 m/s² is
 #: about as hard as you can shake a phone you intend to keep. Gyro: 10 rad/s
 #: is a brisk wrist flick.
-FULL_SCALE = {"accel": 20.0, "accelg": 20.0, "gravity": 10.0, "gyro": 10.0, "mag": 100.0}
+FULL_SCALE = {
+    "accel": 20.0, "accelg": 20.0, "gravity": 10.0, "gyro": 10.0, "gyroraw": 10.0,
+    "mag": 100.0, "magraw": 100.0, "headaccel": 10.0, "audio": 1.0,
+}
 
 
 def bar(value: float, full: float, width: int = 12) -> str:
@@ -72,12 +76,20 @@ class LiveDisplay:
             avail = ",".join(d.sensors) or "none yet"
             return [f"  {BOLD}{name:<14}{RESET} {DIM}no {self.sensor} — has: {avail}{RESET}"]
 
-        mag = r.magnitude
         nums = "  ".join(f"{v:+6.2f}" for v in r.values)
-        line = (
-            f"  {BOLD}{name:<14}{RESET}{hz:5.1f} Hz  {nums}  "
-            f"{DIM}|{RESET}{bar(mag, FULL_SCALE.get(self.sensor, 20.0))}{DIM}|{RESET} {mag:5.2f}"
-        )
+        line = f"  {BOLD}{name:<14}{RESET}{hz:5.1f} Hz  {nums}"
+        if self.sensor in VECTOR_SENSORS:
+            # A bar only means something when the axes are a vector. The length
+            # of a lat/lon pair is a number, but it is not about anything.
+            mag = r.magnitude
+            line += (
+                f"  {DIM}|{RESET}{bar(mag, FULL_SCALE.get(self.sensor, 20.0))}"
+                f"{DIM}|{RESET} {mag:5.2f}"
+            )
+        else:
+            axes = AXES.get(self.sensor, ())
+            if axes:
+                line += f"   {DIM}{' '.join(axes)}{RESET}"
         out = [line]
         # Attitude is the other genuinely useful channel, and it costs one
         # short line, so show it when the phone is sending it.

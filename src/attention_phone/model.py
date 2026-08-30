@@ -28,16 +28,36 @@ from dataclasses import dataclass, field
 
 #: Axis names per sensor, in the order they appear in ``Reading.values``.
 AXES: dict[str, tuple[str, ...]] = {
+    # Fused device motion — what you almost always want.
     "accel": ("x", "y", "z"),
-    "accelg": ("x", "y", "z"),
     "gravity": ("x", "y", "z"),
     "gyro": ("x", "y", "z"),
     "attitude": ("yaw", "pitch", "roll"),
+    "quat": ("w", "x", "y", "z"),
     "mag": ("x", "y", "z"),
-    "pressure": ("kpa",),
+    # Raw, unfused.
+    "accelg": ("x", "y", "z"),
+    "gyroraw": ("x", "y", "z"),
+    "magraw": ("x", "y", "z"),
+    # Environment.
+    "pressure": ("kpa", "altitude"),
     "location": ("lat", "lon", "alt", "speed"),
     "heading": ("deg",),
+    "steps": ("count", "cadence", "distance"),
+    "device": ("proximity", "battery", "orientation"),
+    # AirPods head motion, which only the native app can reach.
+    "head": ("yaw", "pitch", "roll"),
+    "headaccel": ("x", "y", "z"),
+    # Microphone, reduced on the phone to three numbers.
+    "audio": ("rms", "peak", "onset"),
 }
+
+#: Channels whose axes form a vector, so `magnitude` is meaningful. Averaging
+#: or taking the length of a lat/lon pair is nonsense, and this is what stops
+#: the display offering it.
+VECTOR_SENSORS = frozenset(
+    {"accel", "accelg", "gravity", "gyro", "gyroraw", "mag", "magraw", "headaccel"}
+)
 
 G = 9.80665  # m/s² per g, for sources that report acceleration in g
 

@@ -52,7 +52,9 @@ MAPPING: dict[str, tuple[str, tuple[str, ...]]] = {
     "gyroscopeuncalibrated": ("gyro", ("x", "y", "z")),
     "magnetometer": ("mag", ("x", "y", "z")),
     "magnetometeruncalibrated": ("mag", ("x", "y", "z")),
-    "barometer": ("pressure", ("relativeAltitude",)),
+    # Sensor Logger reports kPa here (its example shows 101.3), matching the
+    # native app's channel, plus its own relative altitude.
+    "barometer": ("pressure", ("pressure", "relativeAltitude")),
     "location": ("location", ("latitude", "longitude", "altitude", "speed")),
 }
 

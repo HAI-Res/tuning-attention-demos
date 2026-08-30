@@ -82,7 +82,18 @@ def parse_sample(msg: dict[str, Any]) -> Iterator[Reading]:
 
 async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     hub = request.app[HUB]
-    ws = web.WebSocketResponse(heartbeat=20.0, max_msg_size=64 * 1024)
+    # Liveness is judged by data arriving, not by a protocol ping.
+    #
+    # `heartbeat=` was the obvious choice and it breaks the iOS app:
+    # URLSessionWebSocketTask does not reliably answer a server-initiated PING,
+    # so aiohttp closed a perfectly healthy connection with "No PONG received
+    # after 10.0 seconds" mid-stream. Browsers answer pings correctly, so this
+    # only showed up once there was a native client.
+    #
+    # Every sender here streams continuously, so "nothing at all for 30 s" is a
+    # stronger liveness test than a pong anyway — it catches a phone whose
+    # screen locked, which a pong from a still-open socket would not.
+    ws = web.WebSocketResponse(receive_timeout=30.0, max_msg_size=64 * 1024)
     await ws.prepare(request)
 
     stats = WebClientStats()
@@ -91,7 +102,14 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     log.info("websocket open from %s", peer)
 
     try:
-        async for msg in ws:
+        while True:
+            try:
+                msg = await ws.receive()
+            except TimeoutError:
+                log.info("%s went quiet for 30s; closing", device or peer)
+                break
+            if msg.type in (WSMsgType.CLOSE, WSMsgType.CLOSING, WSMsgType.CLOSED):
+                break
             if msg.type is not WSMsgType.TEXT:
                 if msg.type is WSMsgType.ERROR:
                     log.warning("websocket error from %s: %s", peer, ws.exception())

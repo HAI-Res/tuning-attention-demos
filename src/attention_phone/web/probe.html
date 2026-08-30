@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>attention-phone · what this browser can do</title>
+<style>
+  :root { color-scheme: dark;
+    --bg:#14161a; --fg:#e8e6e1; --dim:#8b8f96; --line:#2a2e35;
+    --ok:#7fc8a9; --bad:#d98b8b; --warn:#e0b674; --panel:#1b1e24; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; padding:env(safe-area-inset-top) 16px 40px; background:var(--bg);
+    color:var(--fg); font:15px/1.5 ui-sans-serif,-apple-system,system-ui,sans-serif; }
+  h1 { font-size:15px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+       color:var(--dim); margin:20px 0 4px; }
+  p.sub { color:var(--dim); font-size:14px; margin:0 0 16px; }
+  button { width:100%; padding:18px; border:0; border-radius:12px; background:var(--fg);
+    color:#14161a; font:inherit; font-size:18px; font-weight:600; margin-bottom:10px; }
+  button:disabled { background:#33383f; color:var(--dim); }
+  button.sec { background:var(--panel); color:var(--fg); border:1px solid var(--line);
+    font-size:15px; padding:13px; }
+  #prog { height:4px; background:var(--line); border-radius:2px; overflow:hidden;
+    margin:0 0 16px; }
+  #prog i { display:block; height:100%; width:0; background:var(--ok); transition:width .2s; }
+  section { border:1px solid var(--line); border-radius:10px; background:var(--panel);
+    padding:12px 14px; margin-bottom:10px; }
+  section h2 { font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--dim); margin:0 0 8px; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:5px 0; border-bottom:1px solid var(--line); vertical-align:top; font-size:14px; }
+  tr:last-child td { border-bottom:0; }
+  td.k { color:var(--dim); padding-right:10px; }
+  td.v { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:13px;
+    letter-spacing:-.02em; white-space:pre-line; }
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  #out { width:100%; height:240px; background:#0f1114; color:var(--dim); border:1px solid var(--line);
+    border-radius:10px; font:12px/1.45 ui-monospace,Menlo,monospace; padding:10px; }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+
+<h1>What this browser can do</h1>
+<p class="sub">Measures what is actually available on <em>this</em> phone, at the rate it
+really delivers. Takes about 25 seconds. Allow the prompts you are willing to.</p>
+
+<button id="go">Run the probe</button>
+<div id="prog"><i></i></div>
+
+<div id="results"></div>
+
+<div id="after" class="hide">
+  <button class="sec" id="copy">Copy the report</button>
+  <textarea id="out" readonly spellcheck="false"></textarea>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const results = $("#results"), prog = $("#prog i");
+  const report = [];
+
+  const line = (k, v) => { report.push([k, String(v)]); };
+
+  function panel(title, rows) {
+    const sec = document.createElement("section");
+    sec.innerHTML = `<h2>${title}</h2><table>${rows.map(([k, v, cls]) =>
+      `<td class="k">${k}</td><td class="v ${cls || ""}">${v}</td>`
+        .replace(/^/, "<tr>") + "</tr>").join("")}</table>`;
+    results.appendChild(sec);
+  }
+
+  /** Interval statistics from a list of event timestamps. */
+  function stats(ts) {
+    if (ts.length < 3) return null;
+    const iv = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
+    const span = ts[ts.length - 1] - ts[0];
+    return {
+      n: ts.length,
+      hz: (ts.length - 1) / (span / 1000),
+      median: iv[Math.floor(iv.length / 2)],
+      p95: iv[Math.max(0, Math.ceil(iv.length * 0.95) - 1)],
+      worst: iv[iv.length - 1],
+    };
+  }
+  const fmt = (s) => s
+    ? `${s.hz.toFixed(1)} Hz\n${s.n} events\nmedian ${s.median.toFixed(1)}ms\n` +
+      `p95 ${s.p95.toFixed(1)}ms\nworst ${s.worst.toFixed(1)}ms`
+    : "too few events";
+
+  // ---- motion: the number the whole web-vs-native decision rests on -------
+  async function probeMotion(seconds) {
+    const perms = [];
+    for (const E of [window.DeviceMotionEvent, window.DeviceOrientationEvent]) {
+      if (typeof E?.requestPermission === "function") {
+        perms.push(await E.requestPermission().catch(() => "denied"));
+      }
+    }
+    const granted = perms.length === 0 || perms.every((p) => p === "granted");
+    if (!granted) {
+      panel("Motion", [["permission", "DENIED", "bad"]]);
+      line("motion.permission", "denied");
+      return;
+    }
+
+    const mt = [], ot = [];
+    const reported = new Set();
+    const channels = { acceleration: 0, accelerationIncludingGravity: 0, rotationRate: 0 };
+    let compass = 0, absolute = null;
+
+    const onM = (e) => {
+      mt.push(performance.now());
+      if (e.interval) reported.add(Number(e.interval).toFixed(2));
+      for (const k of Object.keys(channels)) {
+        const v = e[k];
+        if (v && v.x !== null && v.x !== undefined) channels[k]++;
+        else if (v && v.alpha !== null && v.alpha !== undefined) channels[k]++;
+      }
+    };
+    const onO = (e) => {
+      ot.push(performance.now());
+      if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) compass++;
+      if (absolute === null) absolute = e.absolute;
+    };
+    window.addEventListener("devicemotion", onM);
+    window.addEventListener("deviceorientation", onO);
+    await new Promise((r) => setTimeout(r, seconds * 1000));
+    window.removeEventListener("devicemotion", onM);
+    window.removeEventListener("deviceorientation", onO);
+
+    const ms = stats(mt), os = stats(ot);
+    const claim = [...reported].join(", ") || "not reported";
+    panel("Motion — devicemotion", [
+      ["measured", fmt(ms), ms && ms.hz > 45 ? "ok" : "warn"],
+      ["e.interval claims", claim + " ms"],
+      ["acceleration (no gravity)", channels.acceleration ? "yes" : "NULL", channels.acceleration ? "ok" : "bad"],
+      ["accel + gravity", channels.accelerationIncludingGravity ? "yes" : "NULL", channels.accelerationIncludingGravity ? "ok" : "bad"],
+      ["rotationRate", channels.rotationRate ? "yes" : "NULL", channels.rotationRate ? "ok" : "bad"],
+    ]);
+    panel("Motion — deviceorientation", [
+      ["measured", fmt(os), os && os.hz > 45 ? "ok" : "warn"],
+      ["absolute", String(absolute)],
+      ["webkitCompassHeading", compass ? "yes (true north)" : "no", compass ? "ok" : "warn"],
+    ]);
+    if (ms) line("devicemotion", `${ms.hz.toFixed(1)}Hz median ${ms.median.toFixed(1)}ms p95 ${ms.p95.toFixed(1)}ms worst ${ms.worst.toFixed(1)}ms n=${ms.n}`);
+    if (os) line("deviceorientation", `${os.hz.toFixed(1)}Hz median ${os.median.toFixed(1)}ms`);
+    line("e.interval", claim);
+    line("channels", Object.entries(channels).map(([k, v]) => `${k}=${v ? "yes" : "NULL"}`).join(" "));
+    line("compassHeading", compass ? "yes" : "no");
+  }
+
+  // ---- audio: the channel where the web is not handicapped at all --------
+  async function probeAudio(seconds) {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      panel("Microphone", [["getUserMedia", String(err.name || err), "bad"]]);
+      line("audio", "denied/unavailable");
+      return;
+    }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    const an = ctx.createAnalyser();
+    an.fftSize = 1024;
+    src.connect(an);
+    const buf = new Float32Array(an.fftSize);
+
+    // How often can we actually pull a fresh analysis frame? That is the real
+    // ceiling on browser-side onset detection.
+    const ts = [];
+    let peak = 0;
+    const t0 = performance.now();
+    await new Promise((done) => {
+      const tick = () => {
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        peak = Math.max(peak, Math.sqrt(sum / buf.length));
+        ts.push(performance.now());
+        if (performance.now() - t0 < seconds * 1000) requestAnimationFrame(tick);
+        else done();
+      };
+      requestAnimationFrame(tick);
+    });
+    const s = stats(ts);
+    const track = stream.getAudioTracks()[0];
+    const settings = track.getSettings ? track.getSettings() : {};
+    panel("Microphone", [
+      ["sampleRate", ctx.sampleRate + " Hz", "ok"],
+      ["baseLatency", ctx.baseLatency ? (ctx.baseLatency * 1000).toFixed(1) + " ms" : "n/a"],
+      ["analysis frames", fmt(s)],
+      ["peak RMS heard", peak.toFixed(4)],
+      ["echoCancellation", String(settings.echoCancellation ?? "?")],
+      ["AudioWorklet", ctx.audioWorklet ? "yes" : "no", ctx.audioWorklet ? "ok" : "bad"],
+    ]);
+    line("audio.sampleRate", ctx.sampleRate);
+    line("audio.frameRate", s ? s.hz.toFixed(1) + "Hz" : "?");
+    line("audio.worklet", ctx.audioWorklet ? "yes" : "no");
+    stream.getTracks().forEach((t) => t.stop());
+    ctx.close();
+  }
+
+  // ---- camera ------------------------------------------------------------
+  async function probeCamera() {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", frameRate: { ideal: 60 } },
+      });
+    } catch (err) {
+      panel("Camera", [["getUserMedia", String(err.name || err), "bad"]]);
+      line("camera", "denied/unavailable");
+      return;
+    }
+    const s = stream.getVideoTracks()[0].getSettings();
+    panel("Camera", [
+      ["resolution", `${s.width}×${s.height}`, "ok"],
+      ["frameRate", (s.frameRate || "?") + " fps"],
+      ["facingMode", s.facingMode || "?"],
+      ["WebAssembly SIMD", wasmSimd() ? "yes — MediaPipe will run" : "no", wasmSimd() ? "ok" : "bad"],
+    ]);
+    line("camera", `${s.width}x${s.height}@${s.frameRate}`);
+    line("wasmSimd", wasmSimd());
+    stream.getTracks().forEach((t) => t.stop());
+  }
+
+  /** MediaPipe's WASM build needs SIMD; without it browser-side pose is hopeless. */
+  function wasmSimd() {
+    try {
+      // Minimal SIMD module: (module (func (result v128) (v128.const i32x4 0 0 0 0)))
+      return WebAssembly.validate(new Uint8Array([
+        0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0,
+        10, 22, 1, 20, 0, 253, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
+      ]));
+    } catch { return false; }
+  }
+
+  // ---- everything that is simply present or absent -----------------------
+  function probeFeatures() {
+    const yes = (v) => [v ? "yes" : "no", v ? "ok" : "bad"];
+    const rows = [
+      ["secure context", ...yes(window.isSecureContext)],
+      ["WebSocket", ...yes("WebSocket" in window)],
+      ["Screen Wake Lock", ...yes("wakeLock" in navigator)],
+      ["Geolocation", ...yes("geolocation" in navigator)],
+      ["Touch points", String(navigator.maxTouchPoints || 0)],
+      ["Gamepad API", ...yes("getGamepads" in navigator)],
+      ["— Generic Sensor (rate control)", ...yes("Accelerometer" in window)],
+      ["— Web Bluetooth", ...yes("bluetooth" in navigator)],
+      ["— Web MIDI", ...yes("requestMIDIAccess" in navigator)],
+      ["— Vibration", ...yes("vibrate" in navigator)],
+      ["— Ambient Light", ...yes("AmbientLightSensor" in window)],
+      ["— Magnetometer (raw)", ...yes("Magnetometer" in window)],
+      ["— Barometer", "no — no web API", "bad"],
+    ];
+    panel("Available / not", rows);
+    for (const [k, v] of rows) line("feat." + k.replace(/^— /, ""), v);
+    line("ua", navigator.userAgent);
+    line("cores", navigator.hardwareConcurrency || "?");
+    line("devicePixelRatio", devicePixelRatio);
+    line("perfNowResolution", (() => {
+      let min = Infinity, a = performance.now();
+      for (let i = 0; i < 60000; i++) { const b = performance.now(); if (b > a) { min = Math.min(min, b - a); a = b; } }
+      return min === Infinity ? "?" : min.toFixed(4) + "ms";
+    })());
+  }
+
+  $("#go").onclick = async () => {
+    $("#go").disabled = true;
+    results.innerHTML = "";
+    report.length = 0;
+    const steps = [
+      ["features", async () => probeFeatures(), 5],
+      ["motion", () => probeMotion(10), 55],
+      ["microphone", () => probeAudio(4), 25],
+      ["camera", () => probeCamera(), 15],
+    ];
+    let done = 0;
+    for (const [, fn, weight] of steps) {
+      try { await fn(); } catch (err) { line("error", String(err)); }
+      done += weight;
+      prog.style.width = done + "%";
+    }
+    prog.style.width = "100%";
+    $("#after").classList.remove("hide");
+    $("#out").value = report.map(([k, v]) => `${k}: ${v}`).join("\n");
+    $("#go").disabled = false;
+    $("#go").textContent = "Run again";
+  };
+
+  $("#copy").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($("#out").value);
+      $("#copy").textContent = "Copied";
+    } catch {
+      $("#out").select();
+      $("#copy").textContent = "Select-all done — copy manually";
+    }
+    setTimeout(() => ($("#copy").textContent = "Copy the report"), 2500);
+  };
+})();
+</script>
+</body>
+</html>

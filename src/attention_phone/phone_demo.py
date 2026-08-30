@@ -21,6 +21,7 @@ from aiohttp import web
 from . import certs, net
 from .display import LiveDisplay, summary
 from .hub import Reading, SensorHub
+from .model import AXES
 from .osc import OscSender, parse_endpoint
 from .server import build_app
 from .sources.phyphox import PhyphoxPoller
@@ -178,9 +179,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--tunnel", action="store_true",
                    help="publish through a Cloudflare quick tunnel (needs cloudflared)")
     p.add_argument("--refresh-cert", action="store_true", help="re-download the TLS certificate")
-    p.add_argument("--sensor", default="accel",
-                   choices=["accel", "accelg", "gravity", "gyro", "attitude", "mag"],
-                   help="which sensor the live display shows (default accel)")
+    # Choices come from the axis table so a channel added for the iOS app
+    # cannot be missing here — that mismatch is exactly what bit during testing.
+    p.add_argument("--sensor", default="accel", choices=sorted(AXES),
+                   metavar="NAME",
+                   help="which sensor the live display shows (default accel); "
+                        "one of: " + ", ".join(sorted(AXES)))
     p.add_argument("--osc", metavar="HOST:PORT",
                    help="forward readings over OSC/UDP, e.g. 127.0.0.1:57120 or 'sc'")
     p.add_argument("--osc-prefix", default="phone", help="OSC address prefix (default 'phone')")

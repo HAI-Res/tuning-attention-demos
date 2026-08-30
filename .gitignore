@@ -12,3 +12,10 @@ wheels/
 # Fetched at runtime; the *.local-ip.sh key is public but there is no reason
 # to commit a TLS key, and it is re-downloaded automatically.
 certs/
+
+# Xcode
+ios/**/xcuserdata/
+ios/**/*.xcworkspace/xcuserdata/
+ios/**/DerivedData/
+ios/**/build/
+*.xcuserstate
