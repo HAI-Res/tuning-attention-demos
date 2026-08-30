@@ -156,6 +156,16 @@ packets/second, which neither the sender nor scsynth notices.
 SuperCollider's default language port, which had pushed `sclang` to 57121.
 Check `lsof -nP -iUDP:57120` before blaming the patch.
 
+## What can this phone's browser actually do?
+
+`https://<the URL>/probe` measures it rather than guessing: the real
+`devicemotion` and `deviceorientation` rates with interval percentiles, which
+channels come back null, the microphone sample rate, camera resolution and frame
+rate, and an explicit list of what iOS refuses (Generic Sensor API — so no rate
+control — plus Web Bluetooth, Web MIDI, Vibration, ambient light, barometer). It
+ends with a copyable report. Takes about 25 seconds and settles the
+web-versus-native question with a number instead of an argument.
+
 ## The native iOS app
 
 `ios/` holds a SwiftUI app that streams everything an iPhone exposes — including

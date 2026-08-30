@@ -126,3 +126,18 @@ def test_summary_lists_rates_per_sensor():
     hub.label("p1", "Ada")
     text = summary(hub)
     assert "Ada" in text and "accel" in text and "5 samples" in text
+
+
+async def test_probe_page_is_served():
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        resp = await c.get("/probe")
+        body = await resp.text()
+        assert resp.status == 200
+        # The three measurements that make the page worth having.
+        assert "devicemotion" in body
+        assert "getUserMedia" in body
+        assert "Generic Sensor" in body
+    finally:
+        await c.close()

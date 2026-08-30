@@ -34,6 +34,17 @@ async def _index(request: web.Request) -> web.Response:
     )
 
 
+async def _probe(request: web.Request) -> web.Response:
+    """A page that measures what the browser on *this* phone can actually do.
+
+    Feature detection alone is not the answer to "can the web do this" — the
+    rate iOS Safari delivers `devicemotion` at is undocumented and reports vary
+    between 30 and 60 Hz. This measures it, along with the microphone sample
+    rate and camera settings, and prints a copyable report.
+    """
+    return web.FileResponse(WEB_DIR / "probe.html", headers={"Cache-Control": "no-store"})
+
+
 async def _health(request: web.Request) -> web.Response:
     hub = request.app[HUB]
     return web.json_response(
@@ -54,6 +65,7 @@ def build_app(hub: SensorHub) -> web.Application:
     app.add_routes(
         [
             web.get("/", _index),
+            web.get("/probe", _probe),
             web.get("/ws", websocket_handler),
             web.post("/sensorlogger", push_handler),
             web.get("/health", _health),
