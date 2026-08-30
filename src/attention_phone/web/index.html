@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>attention-phone</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #14161a; --fg: #e8e6e1; --dim: #8b8f96;
+    --line: #2a2e35; --ok: #7fc8a9; --warn: #e0b674; --bad: #d98b8b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: env(safe-area-inset-top) 18px 24px;
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.45 ui-sans-serif, -apple-system, system-ui, sans-serif;
+    /* No scroll-bounce: the page is a fixed instrument panel, and rubber
+       banding while shaking the phone is disorienting. */
+    overscroll-behavior: none; touch-action: manipulation;
+  }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: .06em;
+       text-transform: uppercase; color: var(--dim); margin: 20px 0 14px; }
+  #name {
+    width: 100%; padding: 13px 14px; margin-bottom: 12px;
+    background: #1b1e24; color: var(--fg); border: 1px solid var(--line);
+    border-radius: 10px; font: inherit; font-size: 17px; /* 17px: iOS zooms in on smaller */
+  }
+  button {
+    width: 100%; padding: 20px; border: 0; border-radius: 12px;
+    background: var(--fg); color: #14161a; font: inherit; font-size: 19px;
+    font-weight: 600; letter-spacing: .01em;
+  }
+  button:disabled { background: #33383f; color: var(--dim); }
+  button.stop { background: #3a2e2e; color: var(--fg); }
+  #status { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px;
+            background: #1b1e24; border-left: 3px solid var(--dim);
+            color: var(--dim); font-size: 14px; min-height: 44px; }
+  #status.ok   { border-color: var(--ok);   color: var(--ok); }
+  #status.warn { border-color: var(--warn); color: var(--warn); }
+  #status.bad  { border-color: var(--bad);  color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  td { padding: 7px 0; border-bottom: 1px solid var(--line); }
+  td.k { color: var(--dim); width: 5.5em; }
+  td.v { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+         font-size: 14px; letter-spacing: -.02em; }
+  /* The bar is the part you can read while moving — numbers blur, a bar
+     does not. Centre-anchored because acceleration is signed. */
+  .bar { position: relative; height: 6px; background: #22262c; border-radius: 3px; margin-top: 5px; }
+  .bar i { position: absolute; top: 0; bottom: 0; background: var(--ok); border-radius: 3px; }
+  .bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px;
+                width: 1px; background: var(--line); }
+  #rate { font-family: ui-monospace, Menlo, monospace; color: var(--dim); font-size: 13px; margin-top: 10px; }
+  .hide { display: none; }
+  a { color: var(--dim); }
+</style>
+</head>
+<body>
+
+<h1>attention&#8209;phone</h1>
+
+<input id="name" placeholder="your name" autocomplete="off"
+       autocapitalize="words" spellcheck="false">
+<button id="go">Start sending</button>
+<div id="status">Type a name, then tap Start. iOS will ask for permission to use motion &amp; orientation &mdash; say yes.</div>
+
+<div id="panel" class="hide">
+  <table>
+    <tr><td class="k">accel</td><td class="v" id="v-accel">&mdash;</td></tr>
+    <tr><td colspan="2"><div class="bar"><i id="b-accel"></i></div></td></tr>
+    <tr><td class="k">gyro</td><td class="v" id="v-gyro">&mdash;</td></tr>
+    <tr><td colspan="2"><div class="bar"><i id="b-gyro"></i></div></td></tr>
+    <tr><td class="k">attitude</td><td class="v" id="v-attitude">&mdash;</td></tr>
+    <tr><td class="k">heading</td><td class="v" id="v-heading">&mdash;</td></tr>
+  </table>
+  <div id="rate">&mdash;</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const D2R = Math.PI / 180;
+  const $ = (id) => document.getElementById(id);
+  const nameBox = $("name"), goBtn = $("go"), statusEl = $("status"), panel = $("panel");
+
+  // A device id that survives reloads, so reconnecting keeps the same row on
+  // the laptop instead of appearing as a new phone.
+  let deviceId;
+  try {
+    deviceId = localStorage.getItem("ap-device");
+    if (!deviceId) localStorage.setItem("ap-device", deviceId = "ph-" + Math.random().toString(36).slice(2, 8));
+    nameBox.value = localStorage.getItem("ap-name") || "";
+  } catch { deviceId = "ph-" + Math.random().toString(36).slice(2, 8); }
+
+  const state = {
+    ws: null, running: false, seq: 0, sent: 0,
+    t0: 0, lastAttitude: null, heading: null, wakeLock: null,
+    stamps: [],           // recent send times, for the measured-rate readout
+  };
+
+  const setStatus = (msg, cls = "") => { statusEl.textContent = msg; statusEl.className = cls; };
+
+  // ---- permission ---------------------------------------------------------
+  // iOS 13+ gates devicemotion behind requestPermission(), which only works
+  // from a real user gesture and only in a secure context (HTTPS). Both
+  // events must be asked for separately: motion gives acceleration and
+  // rotation rate, orientation gives absolute attitude and compass heading.
+  async function requestMotionPermission() {
+    const needs = [];
+    if (typeof DeviceMotionEvent?.requestPermission === "function") needs.push(DeviceMotionEvent);
+    if (typeof DeviceOrientationEvent?.requestPermission === "function") needs.push(DeviceOrientationEvent);
+    if (!needs.length) return "unsupported-or-granted";  // Android, desktop, older iOS
+    const results = await Promise.all(needs.map((E) => E.requestPermission().catch(() => "denied")));
+    return results.every((r) => r === "granted") ? "granted" : "denied";
+  }
+
+  // ---- websocket ----------------------------------------------------------
+  function connect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${proto}//${location.host}/ws`);
+    state.ws = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ hello: {
+        d: deviceId, n: nameBox.value.trim() || deviceId,
+        ua: navigator.userAgent, platform: navigator.platform || "",
+      }}));
+      setStatus("connected — sending", "ok");
+    };
+    ws.onclose = () => {
+      if (!state.running) return;
+      setStatus("disconnected — retrying…", "warn");
+      setTimeout(() => state.running && connect(), 1200);
+    };
+    ws.onerror = () => setStatus("connection failed — is the laptop still running phone-demo?", "bad");
+  }
+
+  // ---- sensor events ------------------------------------------------------
+  function onOrientation(e) {
+    // alpha/beta/gamma are degrees. On iOS webkitCompassHeading is the only
+    // true-north figure; alpha alone is relative to an arbitrary start.
+    state.lastAttitude = [e.alpha ?? 0, e.beta ?? 0, e.gamma ?? 0];
+    if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) {
+      state.heading = e.webkitCompassHeading;
+    }
+  }
+
+  function onMotion(e) {
+    const a = e.acceleration, ag = e.accelerationIncludingGravity, rr = e.rotationRate;
+    const sensors = {};
+    // e.acceleration is null on devices without a gyroscope (it needs sensor
+    // fusion to remove gravity); accelerationIncludingGravity is always there.
+    if (a && a.x !== null) sensors.accel = [a.x, a.y, a.z];
+    if (ag && ag.x !== null) sensors.accelg = [ag.x, ag.y, ag.z];
+    if (a && ag && a.x !== null && ag.x !== null) {
+      sensors.gravity = [ag.x - a.x, ag.y - a.y, ag.z - a.z];
+    }
+    // rotationRate is deg/s in the web API but rad/s everywhere else in this
+    // toolkit, so convert here rather than leaving a trap downstream.
+    if (rr && rr.alpha !== null) {
+      sensors.gyro = [rr.alpha * D2R, rr.beta * D2R, rr.gamma * D2R];
+    }
+    if (state.lastAttitude) sensors.attitude = state.lastAttitude;
+    if (state.heading !== null) sensors.heading = [state.heading];
+    if (!Object.keys(sensors).length) return;
+
+    const now = performance.now();
+    if (!state.t0) state.t0 = now;
+    const msg = {
+      d: deviceId, q: ++state.seq,
+      t: (now - state.t0) / 1000,
+      i: e.interval ?? 0,
+      s: sensors,
+    };
+    if (state.ws?.readyState === WebSocket.OPEN) {
+      state.ws.send(JSON.stringify(msg));
+      state.sent++;
+      state.stamps.push(now);
+      if (state.stamps.length > 90) state.stamps.shift();
+    }
+    render(sensors, now);
+  }
+
+  // ---- on-phone display ---------------------------------------------------
+  // Throttled to ~10 Hz: rendering every sample at 60 Hz measurably slows the
+  // send loop on an older phone, and nobody can read it that fast anyway.
+  let lastPaint = 0;
+  const fmt3 = (v) => v.map((n) => (n >= 0 ? " " : "") + n.toFixed(2)).join("  ");
+
+  function bar(el, value, full) {
+    const frac = Math.max(-1, Math.min(1, value / full));
+    el.style.left = (frac < 0 ? 50 + frac * 50 : 50) + "%";
+    el.style.width = Math.abs(frac) * 50 + "%";
+  }
+
+  function render(s, now) {
+    if (now - lastPaint < 100) return;
+    lastPaint = now;
+    if (s.accel) {
+      $("v-accel").textContent = fmt3(s.accel) + "  m/s²";
+      bar($("b-accel"), Math.hypot(...s.accel), 20);
+    }
+    if (s.gyro) {
+      $("v-gyro").textContent = fmt3(s.gyro) + "  rad/s";
+      bar($("b-gyro"), Math.hypot(...s.gyro), 10);
+    }
+    if (s.attitude) $("v-attitude").textContent = fmt3(s.attitude) + "  deg";
+    if (s.heading) $("v-heading").textContent = s.heading[0].toFixed(0) + "°";
+
+    const st = state.stamps;
+    const hz = st.length > 1 ? (st.length - 1) / ((st[st.length - 1] - st[0]) / 1000) : 0;
+    $("rate").textContent = `${hz.toFixed(1)} Hz · ${state.sent} sent · id ${deviceId}`;
+  }
+
+  // ---- start / stop -------------------------------------------------------
+  async function start() {
+    goBtn.disabled = true;
+    if (!window.isSecureContext) {
+      setStatus("This page is not on HTTPS, so iOS will not release motion data. Use the https:// URL from the QR code.", "bad");
+      goBtn.disabled = false; return;
+    }
+    const perm = await requestMotionPermission();
+    if (perm === "denied") {
+      setStatus("Permission denied. Reload the page to be asked again, or turn on Settings → Apps → Safari → Motion & Orientation Access.", "bad");
+      goBtn.disabled = false; return;
+    }
+    try { localStorage.setItem("ap-name", nameBox.value.trim()); } catch {}
+
+    state.running = true;
+    connect();
+    window.addEventListener("deviceorientation", onOrientation);
+    window.addEventListener("devicemotion", onMotion);
+
+    // Without this the screen sleeps after ~30s and the stream dies mid-class.
+    // Backgrounding Safari suspends JS regardless — nothing can fix that.
+    try { state.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
+
+    panel.classList.remove("hide");
+    goBtn.textContent = "Stop"; goBtn.className = "stop"; goBtn.disabled = false;
+    goBtn.onclick = stop;
+    setStatus("connecting…", "warn");
+
+    // If no sample arrives, say which of the two likely causes it is.
+    setTimeout(() => {
+      if (state.running && state.sent === 0) {
+        setStatus(state.ws?.readyState === WebSocket.OPEN
+          ? "Connected, but this device is sending no motion events. Some iPads and desktop browsers have no accelerometer."
+          : "Cannot reach the laptop. The wifi may be blocking device-to-device traffic — ask for the tunnel URL.", "bad");
+      }
+    }, 2500);
+  }
+
+  function stop() {
+    state.running = false;
+    window.removeEventListener("devicemotion", onMotion);
+    window.removeEventListener("deviceorientation", onOrientation);
+    state.ws?.close();
+    state.wakeLock?.release?.().catch(() => {});
+    state.wakeLock = null;
+    goBtn.textContent = "Start sending"; goBtn.className = ""; goBtn.onclick = start;
+    setStatus("stopped", "");
+  }
+
+  goBtn.onclick = start;
+
+  // Re-arm the wake lock after the phone is unlocked or the tab is refocused;
+  // iOS drops it on visibility change and the stream silently stops later.
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && state.running && !state.wakeLock) {
+      try { state.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
+    }
+  });
+})();
+</script>
+</body>
+</html>
