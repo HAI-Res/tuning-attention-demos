@@ -241,18 +241,27 @@ the OSC output (4 phones × 6 sensors × 60 Hz, zero sample loss, p95 interval
 schema from its documentation, the phyphox parser against synthetic responses,
 and the `local-ip.sh` certificate and DNS from this machine.
 
+**Verified on a real iPhone (iPhone 16, iOS 26 Safari, home wifi,
+2026-08-31):** the entire student path. The phone loaded
+`https://10-0-0-184.local-ip.sh:8443` — with iCloud Private Relay still
+**on** — passed the motion-permission prompt, and streamed all six web
+channels at a measured **60.3 Hz**, interval median 16.4 ms, p95 19.4 ms.
+Units confirmed on hardware: `accelg` z ≈ 9.88 and `gravity` magnitude
+≈ 9.81 with the phone flat, `accel` ≈ 0 at rest, attitude in degrees. So
+iOS Safari delivers the full 60 Hz, not the 30 Hz some reports feared, and
+Private Relay does not by itself break the `local-ip.sh` scheme in Safari.
+(The **native app** on the same phone once failed to resolve that hostname
+with -1009 — see `ios/README.md` — so that failure is not a blanket DNS
+block.)
+
 **Not yet tested, because it needs hardware and a room:**
 
-1. **A real iPhone.** The permission flow, and what rate iOS Safari actually
-   delivers `devicemotion` at. Reports range from 30 to 60 Hz depending on iOS
-   version; the page shows its own measured rate so this answers itself in one
-   minute.
-2. **The class wifi.** Whether `local-ip.sh` resolves on it, and whether it has
+1. **The class wifi.** Whether `local-ip.sh` resolves on it, and whether it has
    client isolation. This is the single biggest unknown and decides whether the
    LAN path or `--tunnel` is the default on Sept 9. `--check` diagnoses the
    first half.
-3. **Sensor Logger's real payload.** The name and unit mapping comes from its
+2. **Sensor Logger's real payload.** The name and unit mapping comes from its
    published schema, not from a live push. Unrecognised sensors are passed
    through as `sl:<name>` rather than dropped, so a wrong guess shows up on the
    display instead of vanishing.
-4. **`--tunnel`.** `cloudflared` is not installed on this machine.
+3. **`--tunnel`.** `cloudflared` is not installed on this machine.
