@@ -27,8 +27,11 @@ conversion happens in the page, next to the API that needs it.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
 import logging
+import time
 from collections.abc import Iterator
 from typing import Any
 
@@ -80,6 +83,22 @@ def parse_sample(msg: dict[str, Any]) -> Iterator[Reading]:
         yield Reading(device=device, sensor=name, t=t, values=vals)
 
 
+#: Seconds between server heartbeats. The sender uses these to tell a live
+#: receiver from a socket that merely opened: URLSession reports a WebSocket
+#: send as successful before delivery, so on iOS "sent" proves nothing. Traffic
+#: coming back is the only evidence the far end exists.
+HEARTBEAT_INTERVAL = 2.0
+
+
+async def _heartbeat(ws: web.WebSocketResponse) -> None:
+    while not ws.closed:
+        await asyncio.sleep(HEARTBEAT_INTERVAL)
+        try:
+            await ws.send_str(json.dumps({"ok": round(time.time(), 3)}))
+        except (ConnectionResetError, RuntimeError):
+            return
+
+
 async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     hub = request.app[HUB]
     # Liveness is judged by data arriving, not by a protocol ping.
@@ -101,6 +120,7 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
     attached = False
     peer = request.remote or "?"
     log.info("websocket open from %s", peer)
+    beat = asyncio.create_task(_heartbeat(ws))
 
     try:
         while True:
@@ -138,6 +158,9 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                     pass
             hub.publish_all(parse_sample(payload))
     finally:
+        beat.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await beat
         if attached:
             hub.detach(device)
         log.info(

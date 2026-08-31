@@ -184,3 +184,27 @@ async def test_a_device_with_data_is_not_marked_silent():
         assert row["silent"] is False
     finally:
         await c.close()
+
+
+async def test_server_sends_heartbeats():
+    # The iOS sender cannot tell a live receiver from an open socket, because
+    # URLSession reports sends as succeeding before delivery. Traffic coming
+    # back is the only proof, so the heartbeat is part of the contract.
+    import asyncio
+
+    from attention_phone.sources import web as websrc
+
+    original = websrc.HEARTBEAT_INTERVAL
+    websrc.HEARTBEAT_INTERVAL = 0.05
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        async with c.ws_connect("/ws") as ws:
+            await ws.send_str(json.dumps({"hello": {"d": "p1", "n": "Ada"}}))
+            msg = await asyncio.wait_for(ws.receive(), timeout=2.0)
+            payload = json.loads(msg.data)
+            assert "ok" in payload
+            assert isinstance(payload["ok"], float)
+    finally:
+        websrc.HEARTBEAT_INTERVAL = original
+        await c.close()
