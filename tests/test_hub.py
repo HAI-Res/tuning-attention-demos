@@ -46,10 +46,15 @@ def test_live_excludes_stale_and_keeps_join_order():
 def test_rate_meter_measures_hz():
     m = RateMeter()
     for i in range(31):
-        m.tick(i * 0.01)  # 100 Hz
-    assert 99.0 < m.hz < 101.0
+        m.tick(i * 0.01)  # 100 Hz for 0.3 s
+    # hz_at, not hz: these are synthetic timestamps, and the bare property
+    # judges them against the real clock (where they are ancient, hence zero).
+    assert 99.0 < m.hz_at(0.30) < 105.0
     assert m.count == 31
-    assert "100.0 Hz" in m.summary()
+    # summary() is the exit report, so it uses the session average rather than
+    # a trailing window that has long since expired.
+    assert 99.0 < m.average_hz < 105.0
+    assert "Hz" in m.summary()
 
 
 def test_rate_meter_is_quiet_with_one_sample():
@@ -93,3 +98,39 @@ def test_non_vector_sensors_are_not_treated_as_vectors():
 
     for sensor in ("location", "attitude", "heading", "steps", "device", "quat", "audio"):
         assert sensor not in VECTOR_SENSORS
+
+
+def test_summary_average_is_not_the_windowed_rate():
+    m = RateMeter()
+    for i in range(300):
+        m.tick(i * 0.01)          # 100 Hz for 3 s, entirely in the past
+    assert m.hz == 0.0            # trailing window: nothing recent
+    assert 99 < m.average_hz < 101  # session average: what the run did
+
+
+def test_burst_delivery_does_not_report_absurd_rate():
+    # AirPods head motion arrives batched: 37 samples inside 1.5 ms. Dividing
+    # by the span between first and last gave ~25,000 Hz, which is what the app
+    # was displaying.
+    m = RateMeter()
+    for i in range(37):
+        m.tick(100.0 + i * 0.00004)   # 37 samples across 1.5 ms
+    hz = m.hz_at(101.0)               # judged one second later
+    assert hz < 60, hz
+    assert m.count == 37
+
+
+def test_rate_decays_to_zero_when_a_channel_stops():
+    m = RateMeter()
+    for i in range(300):
+        m.tick(i * 0.01)              # 100 Hz for 3 s
+    assert 90 < m.hz_at(3.0) < 110
+    # Ten seconds later, nothing has arrived since.
+    assert m.hz_at(13.0) == 0.0
+
+
+def test_steady_rate_is_still_measured_correctly():
+    m = RateMeter()
+    for i in range(1000):
+        m.tick(i * 0.01)              # 100 Hz
+    assert 95 < m.hz_at(10.0) < 105

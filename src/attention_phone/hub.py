@@ -21,27 +21,60 @@ Subscriber = Callable[[Reading], None]
 
 
 class RateMeter:
-    """Measured arrival rate and interval spread over a sliding window.
+    """Samples per second over a trailing time window, plus interval spread.
 
-    Reports what actually happened rather than what was asked for — the
-    interesting numbers with phone sensors are always the p95 and the worst
-    interval, because wifi delivers a 60 Hz stream as bursts.
+    The rate is deliberately *not* "samples divided by the span between the
+    first and last of them". Some sensors batch: AirPods head motion arrives in
+    bursts, and 37 samples spanning 1.5 ms compute to 25,000 Hz — a number that
+    is both meaningless and alarming. Dividing by elapsed wall-clock time is
+    immune to it, reports a burst as the low average it really is, and decays to
+    zero when a channel stops instead of freezing at its last value.
+
+    The interval percentiles are still worth having: they describe *delivery*
+    jitter, which is what makes a 100 Hz stream feel uneven.
     """
 
-    def __init__(self, window: int = 120) -> None:
+    WINDOW = 3.0
+
+    def __init__(self, window: int = 400) -> None:
         self._t: deque[float] = deque(maxlen=window)
+        self._start: float | None = None
+        self._last: float | None = None
         self.count = 0
 
     def tick(self, t: float | None = None) -> None:
-        self._t.append(time.monotonic() if t is None else t)
+        now = time.monotonic() if t is None else t
+        if self._start is None:
+            self._start = now
+        self._last = now
+        self._t.append(now)
         self.count += 1
 
     @property
-    def hz(self) -> float:
-        if len(self._t) < 2:
+    def average_hz(self) -> float:
+        """Rate over the whole session, for the report printed on exit.
+
+        Distinct from `hz`, which is a trailing window and correctly reads zero
+        for a channel that has stopped. "How did the run go" wants the average.
+        """
+        if self._start is None or self._last is None:
             return 0.0
-        span = self._t[-1] - self._t[0]
-        return (len(self._t) - 1) / span if span > 0 else 0.0
+        span = self._last - self._start
+        return self.count / span if span > 0 else 0.0
+
+    def hz_at(self, now: float) -> float:
+        if self._start is None:
+            return 0.0
+        cutoff = now - self.WINDOW
+        recent = sum(1 for t in self._t if t >= cutoff)
+        if not recent:
+            return 0.0
+        elapsed = min(self.WINDOW, max(now - self._start, 1e-3))
+        return recent / elapsed
+
+    @property
+    def hz(self) -> float:
+        return self.hz_at(time.monotonic())
 
     @property
     def intervals_ms(self) -> list[float]:
@@ -73,7 +106,7 @@ class RateMeter:
         iv_sorted = sorted(iv)
         p95 = iv_sorted[int(len(iv_sorted) * 0.95) - 1]
         return (
-            f"{self.count} samples, {self.hz:.1f} Hz, interval median "
+            f"{self.count} samples, {self.average_hz:.1f} Hz, interval median "
             f"{statistics.median(iv):.1f}ms p95 {p95:.1f}ms worst {max(iv):.1f}ms"
         )
 
