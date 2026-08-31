@@ -40,7 +40,7 @@ def print_qr(url: str) -> None:
     qr.terminal(compact=True, border=2)
 
 
-def banner(url: str, *, extra: list[str] | None = None) -> None:
+def banner(url: str, *, extra: list[str] | None = None, app_link: str | None = None) -> None:
     print()
     print("  attention-phone")
     print()
@@ -51,6 +51,13 @@ def banner(url: str, *, extra: list[str] | None = None) -> None:
     print("  On the phone: scan it, type a name, tap Start, allow motion access.")
     for line in extra or []:
         print(f"  {line}")
+    if app_link:
+        print()
+        print("  native iOS app — scanning this one configures it directly:")
+        print()
+        print_qr(app_link)
+        print()
+        print(f"  {app_link}")
     print()
 
 
@@ -125,7 +132,16 @@ async def run(args: argparse.Namespace) -> int:
     if args.osc:
         attach_osc(hub, args.osc, args.osc_prefix)
 
-    banner(url, extra=extra)
+    # The native app is configured by link rather than typing: /app serves a
+    # one-tap page, and --app-qr prints the attention-phone:// QR directly.
+    app_link: str | None = None
+    if not args.tunnel:
+        ip = args.host or net.best()
+        app_link = f"attention-phone://configure?host={ip}&port={args.port}&tls={1 if use_tls else 0}"
+        if not args.app_qr:
+            extra.append(f"native app: open {url}/app, or rerun with --app-qr")
+
+    banner(url, extra=extra, app_link=app_link if args.app_qr else None)
 
     pollers = [
         PhyphoxPoller(h.strip(), hub, port=args.phyphox_port, interval=args.phyphox_interval)
@@ -179,6 +195,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--tunnel", action="store_true",
                    help="publish through a Cloudflare quick tunnel (needs cloudflared)")
     p.add_argument("--refresh-cert", action="store_true", help="re-download the TLS certificate")
+    p.add_argument("--app-qr", action="store_true",
+                   help="also print a QR that configures the native iOS app "
+                        "(attention-phone:// link; not available with --tunnel)")
     # Choices come from the axis table so a channel added for the iOS app
     # cannot be missing here — that mismatch is exactly what bit during testing.
     p.add_argument("--sensor", default="accel", choices=sorted(AXES),

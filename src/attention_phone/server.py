@@ -9,6 +9,7 @@ insecure socket.
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 from pathlib import Path
 
@@ -46,6 +47,65 @@ async def _probe(request: web.Request) -> web.Response:
     return web.FileResponse(WEB_DIR / "probe.html", headers={"Cache-Control": "no-store"})
 
 
+def app_config_link(host_header: str, secure: bool) -> str | None:
+    """The `attention-phone://` URL that configures the native iOS app.
+
+    The app registers this scheme and applies host/port/tls from the query, so
+    scanning one QR (or tapping /app) replaces typing an address on the phone.
+    Behind local-ip.sh the Host header carries the dashed IP; the app wants the
+    bare one, since it rebuilds the dashed hostname itself when TLS is on.
+
+    Returns None when the advertised host is not a LAN IP — through a tunnel
+    the app has no usable address, because its transport speaks either
+    `wss://<dashed-ip>.local-ip.sh` or `ws://<ip>` and nothing else.
+    """
+    name, _, port = host_header.partition(":")
+    if name.endswith(".local-ip.sh"):
+        name = name.removesuffix(".local-ip.sh").replace("-", ".")
+    try:
+        ipaddress.ip_address(name)
+    except ValueError:
+        return None
+    if not port:
+        port = "443" if secure else "80"
+    return f"attention-phone://configure?host={name}&port={port}&tls={1 if secure else 0}"
+
+
+async def _app(request: web.Request) -> web.Response:
+    """A one-button page that opens the native app pre-configured."""
+    link = app_config_link(request.host, request.secure)
+    if link is None:
+        inner = (
+            "<p>This receiver is reached through a tunnel, so there is no LAN "
+            "address to hand the app. Run <code>phone-demo</code> without "
+            "<code>--tunnel</code> on a network the phone can reach, or type "
+            "the laptop's address into the app by hand.</p>"
+        )
+    else:
+        inner = (
+            f'<a class="button" href="{link}">Configure the app</a>'
+            "<p>Nothing happens? The native app is not installed — it is the "
+            'instructor\'s instrument, built from Xcode. The <a href="/">web '
+            "sender</a> works on any phone.</p>"
+        )
+    html = (
+        "<!doctype html>\n"
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        "<title>attention-phone app setup</title>\n"
+        "<style>body{font:17px/1.5 -apple-system,system-ui,sans-serif;"
+        "margin:3em auto;max-width:24em;padding:0 1em}"
+        ".button{display:block;text-align:center;background:#0a84ff;color:#fff;"
+        "text-decoration:none;padding:1em;border-radius:12px;font-weight:600}"
+        "</style>\n"
+        "<h1>Native app setup</h1>\n"
+        "<p>Hands this laptop's address, port and TLS setting to the "
+        "attention-phone iOS app in one tap.</p>\n"
+        f"{inner}\n"
+    )
+    return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-store"})
+
+
 async def _health(request: web.Request) -> web.Response:
     hub = request.app[HUB]
     return web.json_response(
@@ -79,6 +139,7 @@ def build_app(hub: SensorHub) -> web.Application:
     app.add_routes(
         [
             web.get("/", _index),
+            web.get("/app", _app),
             web.get("/probe", _probe),
             web.get("/ws", websocket_handler),
             web.post("/sensorlogger", push_handler),

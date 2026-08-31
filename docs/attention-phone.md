@@ -36,6 +36,7 @@ uv run phone-demo --sensor gyro            # or accelg / gravity / attitude / ma
 uv run phone-demo --osc 127.0.0.1:57120    # forward to SuperCollider / Max / Pd
 uv run phone-demo --tunnel                 # public URL, for a wifi that blocks LAN traffic
 uv run phone-demo --check                  # network + certificate diagnostics
+uv run phone-demo --app-qr                 # also print a QR that configures the native iOS app
 uv run phone-demo --phyphox 10.0.0.7,10.0.0.8   # also poll phyphox devices
 ```
 
