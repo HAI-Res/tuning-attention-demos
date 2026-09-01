@@ -153,6 +153,12 @@ Names are slugified, since OSC treats space, `#`, `*`, `?`, `[`, `{` and `/` as
 pattern characters. Measured here: 4 phones × 6 sensors × 60 Hz is ~1400
 packets/second, which neither the sender nor scsynth notices.
 
+`patches/max/attention-phone.maxpat` is the receiving end for Max: all
+seventeen channels on screen with the rate each one is actually arriving at,
+vanilla Max 8, no packages. The native app can send to it directly with no
+laptop-side server at all. See `patches/max/README.md` — including why there is
+a `js` object in the middle of it, which is not a stylistic choice.
+
 **Gotcha found on this machine:** `ollama` was bound to UDP **57120**,
 SuperCollider's default language port, which had pushed `sclang` to 57121.
 Check `lsof -nP -iUDP:57120` before blaming the patch.
@@ -219,6 +225,9 @@ arrive in bursts.
 | `src/attention_phone/osc.py` | 60-line OSC encoder, no dependency |
 | `src/attention_phone/display.py` | the live terminal readout |
 | `src/attention_phone/fake_phone.py` | synthetic phone for development |
+| `patches/max/attention-phone.maxpat` | the Max receiver, all seventeen channels |
+| `patches/max/attention-phone.js` | splits the OSC address, because `route` cannot |
+| `patches/max/poke.py` | drives every channel so the patch can be checked with no phone |
 | `tests/` | `uv run pytest` — 44 tests |
 
 ### Why a separate repo rather than another demo inside `attention-cv`
