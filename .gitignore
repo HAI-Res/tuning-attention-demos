@@ -19,3 +19,4 @@ ios/**/*.xcworkspace/xcuserdata/
 ios/**/DerivedData/
 ios/**/build/
 *.xcuserstate
+.claude/worktrees/
