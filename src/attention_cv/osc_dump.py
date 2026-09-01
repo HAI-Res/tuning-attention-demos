@@ -1,6 +1,6 @@
 """Print what is actually arriving on an OSC port.
 
-    uv run osc-dump                 # listen on 7400, summarise every 2s
+    uv run osc-dump                 # listen on 7500, summarise every 2s
     uv run osc-dump 57120 --raw     # every message, verbatim
 
 UDP has no notion of a peer that is not there, so a wrong port, a wrong address
@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Listen on a UDP port and report the OSC arriving on it.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("port", nargs="?", type=int, default=7400)
+    p.add_argument("port", nargs="?", type=int, default=7500)
     p.add_argument("--host", default="0.0.0.0",
                    help="0.0.0.0 also hears senders on other machines")
     p.add_argument("--every", type=float, default=2.0,

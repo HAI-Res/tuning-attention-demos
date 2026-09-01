@@ -49,7 +49,7 @@ def test_decode_rejects_a_bundle():
 
 
 def test_endpoint_shorthands():
-    assert parse_endpoint("max") == ("127.0.0.1", 7400)
+    assert parse_endpoint("max") == ("127.0.0.1", 7500)
     assert parse_endpoint("sc") == ("127.0.0.1", 57120)
     assert parse_endpoint("10.0.0.5:9000") == ("10.0.0.5", 9000)
-    assert parse_endpoint("10.0.0.5") == ("10.0.0.5", 7400)
+    assert parse_endpoint("10.0.0.5") == ("10.0.0.5", 7500)

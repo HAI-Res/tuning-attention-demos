@@ -10,7 +10,7 @@ comfortable cap.
 uv sync                 # create .venv and install
 uv run fetch-models     # download the MediaPipe .task bundles into models/
 uv run track-demo       # live hand + body points from the camera, 30 fps
-uv run track-demo --osc max     # ...and into Max on UDP 7400
+uv run track-demo --osc max     # ...and into Max on UDP 7500
 ```
 
 `models/` is gitignored — the bundles are 4–10 MB each and always re-fetchable.
@@ -24,11 +24,11 @@ Pd. `pose-demo` is the same program under its old name, fixed to `--track pose`.
 
 ```sh
 uv run track-demo                         # hands + body on screen, nothing sent
-uv run track-demo --osc max               # ...and into Max on UDP 7400
+uv run track-demo --osc max               # ...and into Max on UDP 7500
 uv run track-demo --track hands --osc sc  # hands only, into SuperCollider
 uv run track-demo --no-window --osc max   # headless: just track and send
 uv run track-demo --video clip.mp4 --loop # a recording instead of a camera
-uv run osc-dump 7400                      # what is actually arriving
+uv run osc-dump 7500                      # what is actually arriving
 ```
 
 ### The addresses
@@ -102,11 +102,28 @@ Measured on this machine, 638×1080 video, one person, both hands, against a
 | `hands` (two) | 21.4 ms |
 | `hands,pose` | **31.1 ms** |
 
-Hands are the expensive half, and both together leave about 2 ms of the 30 fps
-budget. That works — the run above held a 33.3 ms median interval with one late
-frame in 150 — but there is no headroom for a slower machine or a second
-person. `--fps 24` buys 8 ms back, `--hands 1` buys 10 ms, and `--track hands`
-on its own is the cheapest thing that still tracks fingers.
+Hands are the expensive half. Those numbers are from a recording of one person
+standing still, though, which is optimistic: on a live camera with someone
+actually moving and both hands up, both trackers together measured a 28 ms
+median but a **43.7 ms p95**, and a p95 over budget is what decides the frame
+rate. Measured on the built-in FaceTime camera:
+
+| | rendered | late frames |
+| --- | --- | --- |
+| `--track hands` | 28.6 fps | 2 of 178 |
+| `--track pose` | 29.2 fps | 0 of 180 |
+| both, 30 fps cap | 14.2 fps | **88 of 89** |
+| both, `--fps 15` | 15.0 fps | 0 of 90 |
+
+Both trackers at 30 fps do not merely run slow, they run *unevenly*: the loop
+overruns its 33 ms budget, misses the next camera frame and catches the one
+after, so the result is a jittery 14 rather than a steady one. `--fps 15` is the
+honest setting for both at once, and it holds: a 16-minute session ran 14973
+frames at 14.9 fps with 38 late frames, 0.25% of the run. One tracker on its own
+holds 30 fps comfortably.
+
+For a slower machine or a second person, `--hands 1` buys 10 ms and `--track
+hands` on its own is the cheapest thing that still tracks fingers.
 
 ### The trap: MediaPipe's handedness does *not* need swapping
 
@@ -130,6 +147,27 @@ the shape of the hand — which side the thumb is on, palm versus back — not f
 where it sits in the frame. So the label is used exactly as it arrives.
 `--swap-hands` is still there for a camera that mirrors in hardware, and the
 on-screen `L`/`R` caption next to each wrist makes it a five-second check.
+
+## Into Max
+
+```sh
+open patches/max/attention-cv.maxpat     # a receiver, three taps, a worked example
+uv run track-demo --osc max              # ...and something for it to hear
+```
+
+Vanilla Max 8, no packages or externals. A `cv.receive` bpatcher owns the socket
+on **UDP 7500**; `cv.point` bpatchers tap one channel each, with a dropdown for
+which one and outlets for the whole list, x, y, z and magnitude. `cv.js` splits
+the OSC address and pushes each channel to a named receive, which is why a
+second person in frame just starts arriving at `cv.pose.1.*` with no patch edit.
+
+7500 rather than 7400 because that one belongs to the phone receiver in
+`attention-phone`, and one UDP port takes one receiver — on separate ports both
+patches can be open at once.
+
+`patches/max/README.md` has the details, including which of the forty-one
+channels are actually worth mapping. With no camera to hand,
+`python3 patches/max/poke.py` drives every one of them.
 
 ## Using a phone as the camera
 
@@ -175,8 +213,8 @@ UDP has no notion of a peer that is not there, so a wrong port, a wrong address
 and a firewall all look identical from the sending end: silence.
 
 ```sh
-uv run osc-dump 7400        # slow, averaged summary of every address arriving
-uv run osc-dump 7400 --raw  # every message, verbatim
+uv run osc-dump 7500        # slow, averaged summary of every address arriving
+uv run osc-dump 7500 --raw  # every message, verbatim
 ```
 
 That answers "is anything arriving, and under what address" without opening
@@ -301,6 +339,7 @@ frames: cheaper than re-detecting every frame, and noticeably steadier.
 | `src/attention_cv/track_demo.py` | the live demo CLI: camera, tracking, OSC |
 | `src/attention_cv/osc_dump.py` | `uv run osc-dump` — what is arriving on a port |
 | `src/attention_cv/pose_demo.py` | `track_demo` under its old name, `--track pose` |
+| `patches/max/` | the Max receiver, the taps, and `poke.py` |
 | `tests/` | `uv run pytest` — 50 tests |
 
 ## Prior art: the singing bowl game

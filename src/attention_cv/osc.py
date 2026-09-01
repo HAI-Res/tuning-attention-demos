@@ -117,15 +117,19 @@ class OscSender:
         self._sock.close()
 
 
-def parse_endpoint(text: str, default_port: int = 7400) -> tuple[str, int]:
-    """``"127.0.0.1:7400"`` or a shorthand -> ``(host, port)``.
+def parse_endpoint(text: str, default_port: int = 7500) -> tuple[str, int]:
+    """``"127.0.0.1:7500"`` or a shorthand -> ``(host, port)``.
 
-    7400 is the default because it is what the class's Max patch binds. 57120
-    is SuperCollider's language port — and on this machine ``ollama`` also
-    binds it, which is worth knowing before blaming a patch.
+    7500 rather than 7400, which is the *phone* receiver's port in
+    ``attention-phone``. One UDP port takes one receiver, so sharing 7400 would
+    mean a camera and a room of phones could never be running at the same time.
+    ``--osc 127.0.0.1:7400`` still sends into the phone patch on purpose.
+
+    57120 is SuperCollider's language port — and on this machine ``ollama``
+    also binds it, which is worth knowing before blaming a patch.
     """
     if text in ("max",):
-        return ("127.0.0.1", 7400)
+        return ("127.0.0.1", 7500)
     if text in ("sc", "supercollider"):
         return ("127.0.0.1", 57120)
     if ":" in text:

@@ -1,7 +1,7 @@
 """Live hand and body tracking, with the landmarks sent out over OSC.
 
     uv run track-demo                              # hands + body on screen
-    uv run track-demo --osc max                    # ...and into Max on UDP 7400
+    uv run track-demo --osc max                    # ...and into Max on UDP 7500
     uv run track-demo --track hands --osc sc        # hands only, into SuperCollider
     uv run track-demo --camera 1 --list-cameras     # find the phone
 
@@ -182,7 +182,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     osc = p.add_argument_group("osc")
     osc.add_argument("--osc", metavar="HOST:PORT",
-                     help="send landmarks here; 'max' = 127.0.0.1:7400, "
+                     help="send landmarks here; 'max' = 127.0.0.1:7500, "
                           "'sc' = 127.0.0.1:57120")
     osc.add_argument("--osc-prefix", default="/cv",
                      help="first component of every OSC address")
