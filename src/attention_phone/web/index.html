@@ -182,8 +182,11 @@
   }
 
   // ---- on-phone display ---------------------------------------------------
-  // Throttled to ~10 Hz: rendering every sample at 60 Hz measurably slows the
-  // send loop on an older phone, and nobody can read it that fast anyway.
+  // Throttled to 2 Hz. Partly because rendering every sample at 60 Hz
+  // measurably slows the send loop on an older phone — but the load-bearing
+  // reason is that rapidly flickering numbers and bars are a visual/vestibular
+  // migraine trigger. Data still streams at full rate; only the paint is slow.
+  // Do not raise this for "smoothness".
   let lastPaint = 0;
   const fmt3 = (v) => v.map((n) => (n >= 0 ? " " : "") + n.toFixed(2)).join("  ");
 
@@ -194,7 +197,7 @@
   }
 
   function render(s, now) {
-    if (now - lastPaint < 100) return;
+    if (now - lastPaint < 500) return;
     lastPaint = now;
     if (s.accel) {
       $("v-accel").textContent = fmt3(s.accel) + "  m/s²";
