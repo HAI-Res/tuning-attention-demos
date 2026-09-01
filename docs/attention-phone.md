@@ -1,23 +1,57 @@
 # attention-phone
 
-Phone sensors — accelerometer, gyroscope, attitude, compass — streamed onto the
-laptop for the tuning-attention class. Companion to
-[`attention-cv`](../tunning-attention-class): same language, same `uv` runner
-conventions, same one-command bar.
+Phone sensors — accelerometer, gyroscope, attitude, compass, AirPods head
+orientation — streamed live onto a laptop and into sound, for *Tuning
+Attention* (21M.369). Companion to
+[`attention-cv`](../tunning-attention-class), which does the same for camera
+input: same language, same `uv` runner conventions, same one-command bar.
 
 Nothing to install on the phones. No App Store, no TestFlight, no per-student
 provisioning. A student opens a URL, taps Start, and their movement is on the
 laptop.
 
-## Setup
+## What is in here
+
+Three pieces, and one wire protocol shared by all of them:
+
+- **A sender page** — `src/attention_phone/web/index.html`, served to any
+  phone that opens the URL. This is the students' path: zero install, ~60 Hz,
+  works on Android.
+- **A receiver** — `uv run phone-demo`. Takes every sender, shows live values
+  in the terminal, and can forward everything to SuperCollider / Max / Pd as
+  OSC.
+- **Max patches** — `patches/max/`. The receiving end in Max, if that is where
+  the sound lives. Vanilla Max 8, no packages.
+
+Plus a **native iOS app** in `ios/` (shipped as *Ductus*), which is the
+instructor's instrument rather than a student requirement. It reaches the two
+things a browser cannot: **AirPods head orientation** and **microphone onset
+detection**, at 100 Hz.
+
+Nothing here depends on the others being present. The phone can talk to the
+Python receiver, or straight to Max, and a patch written against one sender
+works against the other.
+
+## Five minutes, no phone required
 
 ```sh
-uv sync                 # create .venv and install
-uv run phone-demo       # serve the sender page, print a QR code, show live values
+uv sync                                       # create .venv and install
+uv run phone-demo                             # in one pane
+uv run fake-phone --insecure -n 4 --hz 60     # in another: four walking phones
 ```
 
-Then scan the QR code with a phone on the same wifi, type a name, tap **Start**,
-and allow motion access when iOS asks.
+You should see four devices with live numbers. That exercises the whole path —
+protocol, hub, rate metering, display — with no hardware and no network
+questions, and is the fastest way to know the checkout is sound.
+
+Then with a real phone, on the same wifi:
+
+```sh
+uv run phone-demo
+```
+
+Scan the QR code it prints, type a name, tap **Start**, and allow motion access
+when iOS asks.
 
 ```
 https://10-0-0-184.local-ip.sh:8443  3 phones · 24s
@@ -27,6 +61,17 @@ https://10-0-0-184.local-ip.sh:8443  3 phones · 24s
   Grisha          58.8 Hz   -0.02   +0.11   -0.05  |▏           |  0.12
   Anna            59.1 Hz   +4.10   +0.88   -6.02  |████▍       |  7.34
 ```
+
+
+### Where to read next
+
+| you want | read |
+| --- | --- |
+| the design reasoning, and what a phone can actually expose | `SURVEY.md` |
+| the iOS app: building, traps, what is verified on hardware | `ios/README.md` |
+| Max: how to receive, and why the patch is shaped that way | `patches/max/README.md` |
+| rules that are not obvious from the code | `CLAUDE.md` |
+| shipping the app | `ios/APPSTORE.md` |
 
 ## The demos
 
@@ -38,14 +83,6 @@ uv run phone-demo --tunnel                 # public URL, for a wifi that blocks 
 uv run phone-demo --check                  # network + certificate diagnostics
 uv run phone-demo --app-qr                 # also print a QR that configures the native iOS app
 uv run phone-demo --phyphox 10.0.0.7,10.0.0.8   # also poll phyphox devices
-```
-
-No phone to hand? A synthetic one speaks the same protocol, so you can build a
-sound mapping on a train:
-
-```sh
-uv run phone-demo                                  # in one pane
-uv run fake-phone --insecure -n 4 --hz 60          # in another: four walking phones
 ```
 
 `fake-phone` generates a walking gait — a ~2 Hz bounce with a sharper
@@ -247,7 +284,8 @@ arrive in bursts.
 | `patches/max/attention-phone.js` | splits the OSC address, because `route` cannot |
 | `patches/max/address.js` | this Mac's address, via Node for Max |
 | `patches/max/poke.py` | drives every channel so the patch can be checked with no phone |
-| `tests/` | `uv run pytest` — 44 tests |
+| `ios/` | the native iOS app (*Ductus*) — see `ios/README.md` |
+| `tests/` | `uv run pytest` — 64 tests |
 
 ### Why a separate repo rather than another demo inside `attention-cv`
 
