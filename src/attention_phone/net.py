@@ -32,11 +32,23 @@ class Address:
     point_to_point: bool
 
     @property
+    def link_local(self) -> bool:
+        """169.254.0.0/16 — what macOS assigns when DHCP never answered."""
+        return ipaddress.ip_address(self.ip) in ipaddress.ip_network("169.254.0.0/16")
+
+    @property
     def score(self) -> int:
         """Higher is a better guess for "the address phones should use"."""
         s = 0
+        # A self-assigned address means "this interface got no DHCP reply" — an
+        # ethernet adapter in a dock with nothing behind it, typically. It is
+        # never routable, but `ipaddress` calls it private, so without this it
+        # collects the +100 below and beats live wifi. Found on CSAIL's network,
+        # where it also had to beat a *public* 128.30.x address to win.
+        if self.link_local:
+            s -= 1000
         if self.private:
-            s += 100  # a phone on the same wifi is almost always in RFC1918
+            s += 100  # a phone on the same wifi is usually, not always, RFC1918
         if not self.point_to_point:
             s += 50  # p2p interfaces are tunnels wearing a normal name
         if self.iface.startswith("en"):
@@ -102,6 +114,8 @@ def describe() -> str:
     lines = []
     for i, a in enumerate(candidates()):
         kind = "private" if a.private else "PUBLIC"
+        if a.link_local:
+            kind = "self-assigned, NO DHCP"
         p2p = ", point-to-point (VPN?)" if a.point_to_point else ""
         mark = "→" if i == 0 else " "
         lines.append(f"  {mark} {a.ip:<16} {a.iface:<8} {kind}{p2p}")
