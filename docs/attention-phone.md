@@ -153,11 +153,26 @@ Names are slugified, since OSC treats space, `#`, `*`, `?`, `[`, `{` and `/` as
 pattern characters. Measured here: 4 phones × 6 sensors × 60 Hz is ~1400
 packets/second, which neither the sender nor scsynth notices.
 
-`patches/max/attention-phone.maxpat` is the receiving end for Max: all
-seventeen channels on screen with the rate each one is actually arriving at,
-vanilla Max 8, no packages. The native app can send to it directly with no
-laptop-side server at all. See `patches/max/README.md` — including why there is
-a `js` object in the middle of it, which is not a stylistic choice.
+`patches/max/` is the receiving end for Max — vanilla Max 8, no packages, no
+externals. The native app can send to it directly with no laptop-side server at
+all. Two reusable pieces rather than one big patch:
+
+```
+[bpatcher ap.receive.maxpat]                    one per Max session; owns the socket
+[bpatcher ap.channel.maxpat @args ap.gyro]      a tap: pick a channel, use the outlets
+```
+
+`ap.receive` shows the port, this Mac's address and a link that configures the
+app in one tap. `ap.channel` is a dropdown of the seventeen channels with
+outlets for the list, each axis and the magnitude — drop in as many as you
+need. `attention-phone.maxpat` is a small starter using both;
+`attention-phone-monitor.maxpat` is the seventeen-row inventory for when the
+question is "is the phone sending this at all". Both own the socket, so open
+one at a time.
+
+See `patches/max/README.md` — including why there is a `js` object in the
+middle of it, which is not a stylistic choice, and why nothing on screen
+updates at sensor rate.
 
 **Gotcha found on this machine:** `ollama` was bound to UDP **57120**,
 SuperCollider's default language port, which had pushed `sclang` to 57121.
@@ -225,8 +240,12 @@ arrive in bursts.
 | `src/attention_phone/osc.py` | 60-line OSC encoder, no dependency |
 | `src/attention_phone/display.py` | the live terminal readout |
 | `src/attention_phone/fake_phone.py` | synthetic phone for development |
-| `patches/max/attention-phone.maxpat` | the Max receiver, all seventeen channels |
+| `patches/max/ap.receive.maxpat` | the Max receiver: socket, address, phone chooser |
+| `patches/max/ap.channel.maxpat` | one tap — a channel dropdown and its outlets |
+| `patches/max/attention-phone.maxpat` | starter patch using both |
+| `patches/max/attention-phone-monitor.maxpat` | all seventeen channels with arrival rates |
 | `patches/max/attention-phone.js` | splits the OSC address, because `route` cannot |
+| `patches/max/address.js` | this Mac's address, via Node for Max |
 | `patches/max/poke.py` | drives every channel so the patch can be checked with no phone |
 | `tests/` | `uv run pytest` — 44 tests |
 
