@@ -105,6 +105,13 @@ thing to check when a menu appears to do nothing.
 A phone with no name set sends under its device id, so expect
 `/phone/ios-e5b28f/accel` rather than a person's name.
 
+One unit to be careful with: `audio` is `rms, peak, onset`, and only the first
+two are 0–1. **`onset` is a dB rise between frames** — `max(0, db - previous)`
+in `AudioProvider.swift` — so it is bounded below at 0 and unbounded above.
+Values above 1 are a sharp transient, not a bug, and scaling it as if it were
+0–1 will clip every real hit. The app's own channel table calls it 0–1, which is
+wrong and is on the list for build 2.
+
 ## Nothing on screen updates at sensor rate
 
 A phone sends at up to 100 Hz. Number boxes wired straight to that flicker, and

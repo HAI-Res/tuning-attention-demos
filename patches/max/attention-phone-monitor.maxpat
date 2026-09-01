@@ -4510,7 +4510,7 @@
       20.0
      ],
      "style": "",
-     "text": "rms, peak, onset \u00b7 0\u20131",
+     "text": "rms, peak 0\u20131 \u00b7 onset dB rise",
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
