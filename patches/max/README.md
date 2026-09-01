@@ -109,8 +109,8 @@ One unit to be careful with: `audio` is `rms, peak, onset`, and only the first
 two are 0–1. **`onset` is a dB rise between frames** — `max(0, db - previous)`
 in `AudioProvider.swift` — so it is bounded below at 0 and unbounded above.
 Values above 1 are a sharp transient, not a bug, and scaling it as if it were
-0–1 will clip every real hit. The app's own channel table calls it 0–1, which is
-wrong and is on the list for build 2.
+0–1 will clip every real hit. The app agrees since Ductus 1.0 (1), where
+`Channel.audio.unit` reads "0–1, dB rise".
 
 ## Nothing on screen updates at sensor rate
 
