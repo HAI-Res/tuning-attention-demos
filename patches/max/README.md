@@ -167,6 +167,24 @@ seventeen rows and a tap does not.
 folder; move a `.maxpat` somewhere else on its own and the `js` object fails to
 create, taking every patch cord attached to it with it.
 
+### If `js` does not work here at all
+
+Unverified as of 2026-09-01: the phone provably delivers 99 Hz to port 7400
+(packet capture), but nobody has yet confirmed the `js` object instantiates on
+the machine this runs on. If it does not, that is a rethink rather than a
+tweak — the address still has to be split somewhere, and with `oscparse`
+absent and `fromsymbol` leaking, only two real options remain:
+
+- **Add the CNMAT package** and use `[OSC-route]`. Correct, and costs the
+  no-dependencies property this patch set was built around.
+- **Move the split to the Python side**: have `phone-demo` emit per-channel
+  OSC addresses that a plain `[route]` can match with fixed arguments. Costs
+  nothing in Max and changes the wire format, so the app and the page would
+  have to agree.
+
+Decide which before rebuilding anything; both are real, neither is a small
+edit to what is here.
+
 ## Where the address comes from
 
 Max has no object that reports a local IP and its `js` cannot enumerate network
