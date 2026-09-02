@@ -89,8 +89,8 @@
      "patching_rect": [
       20.0,
       70.0,
-      664.0,
-      284.0
+      440.0,
+      272.0
      ],
      "style": "",
      "numinlets": 0,
@@ -109,7 +109,7 @@
      "id": "obj-4",
      "maxclass": "comment",
      "patching_rect": [
-      700.0,
+      476.0,
       70.0,
       260.0,
       34.0
@@ -128,7 +128,7 @@
      "id": "obj-5",
      "maxclass": "comment",
      "patching_rect": [
-      700.0,
+      476.0,
       112.0,
       260.0,
       62.0
