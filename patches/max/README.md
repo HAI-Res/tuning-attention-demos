@@ -24,7 +24,9 @@ to Max directly.
 | `ap.receive.maxpat` | the receiver: socket, address, phone chooser, throughput |
 | `ap.channel.maxpat` | one tap: a channel dropdown and its outlets |
 | `attention-phone.js` | splits the OSC address; the reason is below |
-| `address.js` | this Mac's address, via Node for Max |
+| `address.js` | this Mac's address and the QR, via Node for Max |
+| `qr.js` | draws the QR — no install, see below |
+| `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
 | `poke.py` | drives every channel so the patch works with no phone |
 
 **Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
@@ -33,8 +35,10 @@ the starter is for doing something with it.
 
 ## Pointing the phone at it
 
-The receiver block prints the address and a link. Open the link on the phone and
-it sets host, port and mode in one tap:
+**Point the phone's camera at the QR in the receiver block.** It sets host, port
+and transport in one tap, and redraws itself if the address or port changes, so
+it cannot go stale. The same link is printed as text beside it, to read out or
+type if a camera is not to hand:
 
 ```
 ductus://configure?host=128.30.9.64&osc=7400&mode=osc
@@ -184,6 +188,24 @@ absent and `fromsymbol` leaking, only two real options remain:
 
 Decide which before rebuilding anything; both are real, neither is a small
 edit to what is here.
+## Why the QR needs nothing installed
+
+The app-to-Max path is meant to work with **no laptop-side server at all**, and
+a QR that needed one would have quietly taken that away. The first version
+shelled out to Python and `segno` — but macOS ships `python3` without `segno`,
+so on any machine but the one it was written on that meant "clone the repo and
+run `uv sync`" before a code appeared. For a room of people, that is not a
+dependency, it is a wall.
+
+So it uses only what Max already brings: **Node for Max** is bundled with every
+Max 8, `zlib` is in Node's standard library, and `vendor/qrcode-generator.js`
+is a dependency-free MIT encoder committed into the repo. Nothing is fetched
+and nothing is installed. `qr.js` is a thin wrapper: the library makes the
+module grid, and about forty lines turn it into a PNG.
+
+Verified by decoding rather than by inspection — 27 generated codes were read
+back with macOS's own QR detector, the same class of decoder a phone camera
+uses, and every one returned exactly the URL encoded.
 
 ## Where the address comes from
 

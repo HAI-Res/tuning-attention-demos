@@ -13,7 +13,7 @@
    60.0,
    80.0,
    1000.0,
-   700.0
+   810.0
   ],
   "bglocked": 0,
   "openinpresentation": 0,
@@ -89,8 +89,8 @@
      "patching_rect": [
       20.0,
       70.0,
-      390.0,
-      206.0
+      664.0,
+      284.0
      ],
      "style": "",
      "numinlets": 0,
@@ -109,9 +109,9 @@
      "id": "obj-4",
      "maxclass": "comment",
      "patching_rect": [
-      424.0,
+      700.0,
       70.0,
-      250.0,
+      260.0,
       34.0
      ],
      "style": "",
@@ -128,18 +128,18 @@
      "id": "obj-5",
      "maxclass": "comment",
      "patching_rect": [
-      424.0,
+      700.0,
       112.0,
-      250.0,
-      48.0
+      260.0,
+      62.0
      ],
      "style": "",
-     "text": "Open the link on the phone and it configures the app: host, port and mode in one tap.",
+     "text": "Point a phone's camera at the code and it configures the app in one tap: host, port and transport together. It redraws itself if the address changes.",
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
      "fontsize": 12,
-     "linecount": 3
+     "linecount": 4
     }
    },
    {
@@ -148,7 +148,7 @@
      "maxclass": "comment",
      "patching_rect": [
       20.0,
-      300.0,
+      380.0,
       500.0,
       20.0
      ],
@@ -166,7 +166,7 @@
      "maxclass": "comment",
      "patching_rect": [
       20.0,
-      322.0,
+      402.0,
       940.0,
       34.0
      ],
@@ -185,7 +185,7 @@
      "maxclass": "bpatcher",
      "patching_rect": [
       20.0,
-      372.0,
+      452.0,
       250.0,
       28.0
      ],
@@ -217,7 +217,7 @@
      "maxclass": "comment",
      "patching_rect": [
       20.0,
-      406.0,
+      486.0,
       250.0,
       34.0
      ],
@@ -236,7 +236,7 @@
      "maxclass": "bpatcher",
      "patching_rect": [
       310.0,
-      372.0,
+      452.0,
       250.0,
       28.0
      ],
@@ -268,7 +268,7 @@
      "maxclass": "comment",
      "patching_rect": [
       310.0,
-      406.0,
+      486.0,
       250.0,
       34.0
      ],
@@ -287,7 +287,7 @@
      "maxclass": "bpatcher",
      "patching_rect": [
       600.0,
-      372.0,
+      452.0,
       250.0,
       28.0
      ],
@@ -319,7 +319,7 @@
      "maxclass": "comment",
      "patching_rect": [
       600.0,
-      406.0,
+      486.0,
       250.0,
       34.0
      ],
@@ -338,7 +338,7 @@
      "maxclass": "comment",
      "patching_rect": [
       20.0,
-      470.0,
+      550.0,
       500.0,
       20.0
      ],
@@ -356,7 +356,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
-      500.0,
+      580.0,
       190.0,
       22.0
      ],
@@ -377,7 +377,7 @@
      "maxclass": "comment",
      "patching_rect": [
       216.0,
-      502.0,
+      582.0,
       196.0,
       34.0
      ],
@@ -396,7 +396,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
-      528.0,
+      608.0,
       80.0,
       22.0
      ],
@@ -417,7 +417,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
-      556.0,
+      636.0,
       60.0,
       22.0
      ],
@@ -439,7 +439,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
-      584.0,
+      664.0,
       80.0,
       22.0
      ],
@@ -460,7 +460,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
-      612.0,
+      692.0,
       70.0,
       22.0
      ],
@@ -481,7 +481,7 @@
      "maxclass": "ezdac~",
      "patching_rect": [
       20.0,
-      640.0,
+      720.0,
       45.0,
       45.0
      ],
@@ -496,7 +496,7 @@
      "maxclass": "toggle",
      "patching_rect": [
       76.0,
-      640.0,
+      720.0,
       24.0,
       24.0
      ],
@@ -515,7 +515,7 @@
      "maxclass": "comment",
      "patching_rect": [
       106.0,
-      642.0,
+      722.0,
       200.0,
       20.0
      ],
@@ -533,7 +533,7 @@
      "maxclass": "comment",
      "patching_rect": [
       424.0,
-      500.0,
+      580.0,
       540.0,
       48.0
      ],

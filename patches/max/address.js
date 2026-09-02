@@ -1,4 +1,4 @@
-// address.js — "which address should the phone send to?", answered inside Max.
+// address.js — "where should the phone send?", answered inside Max.
 //
 // Runs under [node.script] (Node for Max, bundled with every Max 8 install —
 // not a package you have to go and get). The Max `js` object cannot enumerate
@@ -6,10 +6,10 @@
 // this is the only way for the patch to tell you where to point the phone
 // instead of making you go and look it up.
 //
-// Mirrors the logic in src/attention_phone/net.py, and fixes a bug that one
-// had: the usual trick of "open a socket to 8.8.8.8 and read back the local
-// address" returns whatever interface holds the default route, which with the
-// MIT VPN connected is an 18.x tunnel address no phone on the room's wifi can
+// Mirrors the scoring in src/attention_phone/net.py, and avoids the bug that
+// one had: the usual "open a socket to 8.8.8.8 and read back the local address"
+// trick returns whatever interface holds the default route, which with the MIT
+// VPN connected is an 18.x tunnel address no phone on the room's wifi can
 // reach. So every interface is enumerated and scored instead.
 //
 //   in    port <n>   the UDP port the patch is listening on
@@ -17,9 +17,13 @@
 //   out   host <ip>  best guess at the address a phone should send to
 //   out   url <url>  attention-phone:// link that configures the app in one tap
 //   out   alt <ip…>  every other address, because the guess is sometimes wrong
+//   out   qr <path>  a PNG of that link, for [fpic] to show and a phone to scan
 
 const os = require('os');
+const fs = require('fs');
+const path = require('path');
 const maxApi = require('max-api');
+const qr = require('./qr.js');
 
 // Interfaces that are never the answer: VPN tunnels, Apple's peer-to-peer and
 // low-latency WLAN links, Thunderbolt and virtualisation bridges.
@@ -68,12 +72,41 @@ function emit() {
         return;
     }
     const best = list[0];
+    const url = 'attention-phone://configure?host=' + best.ip + '&osc=' + port + '&mode=osc';
+
     maxApi.outlet('host', best.ip);
-    maxApi.outlet('url',
-        'attention-phone://configure?host=' + best.ip + '&osc=' + port + '&mode=osc');
+    maxApi.outlet('url', url);
 
     const others = list.slice(1).map(function (a) { return a.ip + '(' + a.iface + ')'; });
     maxApi.outlet.apply(maxApi, ['alt'].concat(others.length ? others : ['none']));
+
+    drawQr(url);
+}
+
+// The QR is redrawn whenever the address or the port changes, and never
+// otherwise — a stale code is worse than none, because it sends a room full of
+// people to an address that stopped being right.
+let lastDrawn = '';
+let generation = 0;
+let lastFile = '';
+
+function drawQr(url) {
+    if (url === lastDrawn) { return; }
+    try {
+        // A fresh filename each time, because [fpic] is free to cache by name
+        // and a silently stale image is exactly the failure this must not have.
+        generation += 1;
+        const file = path.join(os.tmpdir(), 'attention-phone-qr-' + generation + '.png');
+        fs.writeFileSync(file, qr.png(url));
+
+        if (lastFile) { try { fs.unlinkSync(lastFile); } catch (e) { /* already gone */ } }
+        lastFile = file;
+        lastDrawn = url;
+        maxApi.outlet('qr', file);
+    } catch (err) {
+        // The link is still on screen as text, which a person can read and type.
+        maxApi.post('attention-phone: could not draw the QR — ' + err.message);
+    }
 }
 
 maxApi.addHandler('port', function (p) {
