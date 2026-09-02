@@ -133,11 +133,11 @@ async def run(args: argparse.Namespace) -> int:
         attach_osc(hub, args.osc, args.osc_prefix)
 
     # The native app is configured by link rather than typing: /app serves a
-    # one-tap page, and --app-qr prints the attention-phone:// QR directly.
+    # one-tap page, and --app-qr prints the ductus:// QR directly.
     app_link: str | None = None
     if not args.tunnel:
         ip = args.host or net.best()
-        app_link = f"attention-phone://configure?host={ip}&port={args.port}&tls={1 if use_tls else 0}"
+        app_link = f"ductus://configure?host={ip}&port={args.port}&tls={1 if use_tls else 0}"
         if not args.app_qr:
             extra.append(f"native app: open {url}/app, or rerun with --app-qr")
 
@@ -197,7 +197,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--refresh-cert", action="store_true", help="re-download the TLS certificate")
     p.add_argument("--app-qr", action="store_true",
                    help="also print a QR that configures the native iOS app "
-                        "(attention-phone:// link; not available with --tunnel)")
+                        "(ductus:// link; not available with --tunnel)")
     # Choices come from the axis table so a channel added for the iOS app
     # cannot be missing here — that mismatch is exactly what bit during testing.
     p.add_argument("--sensor", default="accel", choices=sorted(AXES),

@@ -48,9 +48,9 @@ async def _probe(request: web.Request) -> web.Response:
 
 
 def app_config_link(host_header: str, secure: bool) -> str | None:
-    """The `attention-phone://` URL that configures the native iOS app.
+    """The `ductus://` URL that configures the native iOS app.
 
-    The app registers this scheme and applies host/port/tls from the query, so
+    The app (Ductus) registers this scheme and applies host/port/tls from the query, so
     scanning one QR (or tapping /app) replaces typing an address on the phone.
     Behind local-ip.sh the Host header carries the dashed IP; the app wants the
     bare one, since it rebuilds the dashed hostname itself when TLS is on.
@@ -68,7 +68,7 @@ def app_config_link(host_header: str, secure: bool) -> str | None:
         return None
     if not port:
         port = "443" if secure else "80"
-    return f"attention-phone://configure?host={name}&port={port}&tls={1 if secure else 0}"
+    return f"ductus://configure?host={name}&port={port}&tls={1 if secure else 0}"
 
 
 async def _app(request: web.Request) -> web.Response:
@@ -84,7 +84,7 @@ async def _app(request: web.Request) -> web.Response:
     else:
         inner = (
             f'<a class="button" href="{link}">Configure the app</a>'
-            "<p>Nothing happens? The native app is not installed — it is the "
+            "<p>Nothing happens? Ductus is not installed — it is the "
             'instructor\'s instrument, built from Xcode. The <a href="/">web '
             "sender</a> works on any phone.</p>"
         )
@@ -92,7 +92,7 @@ async def _app(request: web.Request) -> web.Response:
         "<!doctype html>\n"
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
-        "<title>attention-phone app setup</title>\n"
+        "<title>Ductus setup</title>\n"
         "<style>body{font:17px/1.5 -apple-system,system-ui,sans-serif;"
         "margin:3em auto;max-width:24em;padding:0 1em}"
         ".button{display:block;text-align:center;background:#0a84ff;color:#fff;"
@@ -100,7 +100,7 @@ async def _app(request: web.Request) -> web.Response:
         "</style>\n"
         "<h1>Native app setup</h1>\n"
         "<p>Hands this laptop's address, port and TLS setting to the "
-        "attention-phone iOS app in one tap.</p>\n"
+        "Ductus iOS app in one tap.</p>\n"
         f"{inner}\n"
     )
     return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-store"})

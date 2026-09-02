@@ -44,14 +44,19 @@ mapping-clipping bug that shipped as far as a submission archive.
 
 ## Two names
 
-The toolkit and repo are **attention-phone**. The shipped iOS app is
-**Ductus** — App Store name only. The bundle id and the `attention-phone://`
-configuration scheme keep the old name on purpose; they are invisible to
-users and churning them breaks the QR setup.
+The toolkit, the Python package and the repo are **attention-phone**. The iOS
+app is **Ductus** all the way down: target, product, directory
+(`ios/Ductus/`), bundle id `com.chaparralstudios.ductus`, URL scheme
+`ductus://`, log subsystem `ductus`.
+
+The split is deliberate — the receiver takes any sender, and the app is only
+one of them. Note the bundle id is permanent from first upload onward: it was
+renamed on the day of registration precisely because that was the last moment
+it could be.
 
 ## Before touching the Xcode project
 
-`ios/AttentionPhone/project.yml` is the source of truth; run `xcodegen
+`ios/Ductus/project.yml` is the source of truth; run `xcodegen
 generate` after changing it, and never hand-edit the generated
 `.xcodeproj` — Xcode writing to it behind xcodegen's back is a known way to
 lose changes. `ios/README.md` holds the iOS traps worth reading before

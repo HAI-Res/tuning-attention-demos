@@ -213,13 +213,13 @@ async def test_server_sends_heartbeats():
 def test_app_config_link_undashes_the_local_ip_host():
     from attention_phone.server import app_config_link
     assert app_config_link("10-0-0-184.local-ip.sh:8443", True) == \
-        "attention-phone://configure?host=10.0.0.184&port=8443&tls=1"
+        "ductus://configure?host=10.0.0.184&port=8443&tls=1"
 
 
 def test_app_config_link_passes_a_bare_ip_through():
     from attention_phone.server import app_config_link
     assert app_config_link("10.0.0.184:8080", False) == \
-        "attention-phone://configure?host=10.0.0.184&port=8080&tls=0"
+        "ductus://configure?host=10.0.0.184&port=8080&tls=0"
 
 
 def test_app_config_link_refuses_a_tunnel_hostname():
@@ -236,7 +236,7 @@ async def test_app_page_carries_the_scheme_link():
         body = await resp.text()
         assert resp.status == 200
         # tls reflects request.secure, which a plaintext test server lacks.
-        assert "attention-phone://configure?host=10.0.0.184&port=8443&tls=0" in body
+        assert "ductus://configure?host=10.0.0.184&port=8443&tls=0" in body
     finally:
         await c.close()
 
@@ -248,7 +248,7 @@ async def test_app_page_explains_itself_through_a_tunnel():
         resp = await c.get("/app", headers={"Host": "odd-words.trycloudflare.com"})
         body = await resp.text()
         assert resp.status == 200
-        assert "attention-phone://" not in body
+        assert "ductus://" not in body
         assert "tunnel" in body
     finally:
         await c.close()

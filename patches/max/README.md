@@ -37,7 +37,7 @@ The receiver block prints the address and a link. Open the link on the phone and
 it sets host, port and mode in one tap:
 
 ```
-attention-phone://configure?host=128.30.9.64&osc=7400&mode=osc
+ductus://configure?host=128.30.9.64&osc=7400&mode=osc
 ```
 
 `mode=osc` sends only OSC; `mode=both` also keeps the WebSocket to `phone-demo`
