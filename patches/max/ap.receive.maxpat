@@ -16,7 +16,7 @@
    1330.0
   ],
   "bglocked": 0,
-  "openinpresentation": 0,
+  "openinpresentation": 1,
   "default_fontsize": 12.0,
   "default_fontface": 0,
   "default_fontname": "Arial",
@@ -64,7 +64,14 @@
      ],
      "autofit": 1,
      "embed": 0,
-     "forceaspect": 1
+     "forceaspect": 1,
+     "presentation": 1,
+     "presentation_rect": [
+      0.0,
+      0.0,
+      256.0,
+      256.0
+     ]
     }
    },
    {
@@ -85,7 +92,14 @@
       ""
      ],
      "fontname": "Arial",
-     "fontsize": 12
+     "fontsize": 12,
+     "presentation": 1,
+     "presentation_rect": [
+      264.0,
+      0.0,
+      160.0,
+      22.0
+     ]
     }
    },
    {
@@ -103,7 +117,14 @@
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
-     "fontsize": 12
+     "fontsize": 12,
+     "presentation": 1,
+     "presentation_rect": [
+      264.0,
+      24.0,
+      160.0,
+      20.0
+     ]
     }
    },
    {
@@ -126,7 +147,14 @@
      ],
      "parameter_enable": 0,
      "fontname": "Arial",
-     "fontsize": 12
+     "fontsize": 12,
+     "presentation": 1,
+     "presentation_rect": [
+      264.0,
+      56.0,
+      160.0,
+      22.0
+     ]
     }
    },
    {
@@ -144,7 +172,14 @@
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
-     "fontsize": 12
+     "fontsize": 12,
+     "presentation": 1,
+     "presentation_rect": [
+      264.0,
+      80.0,
+      160.0,
+      20.0
+     ]
     }
    },
    {

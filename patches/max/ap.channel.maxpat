@@ -16,7 +16,7 @@
    660.0
   ],
   "bglocked": 0,
-  "openinpresentation": 0,
+  "openinpresentation": 1,
   "default_fontsize": 12.0,
   "default_fontface": 0,
   "default_fontname": "Arial",
@@ -66,7 +66,14 @@
      ],
      "parameter_enable": 0,
      "fontname": "Arial",
-     "fontsize": 12
+     "fontsize": 12,
+     "presentation": 1,
+     "presentation_rect": [
+      0.0,
+      0.0,
+      246.0,
+      22.0
+     ]
     }
    },
    {
