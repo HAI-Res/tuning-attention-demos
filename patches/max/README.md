@@ -74,10 +74,22 @@ Max loads depends on where the open patch is saved.
 | `qr.js` | draws the QR — no install, see below |
 | `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
 | `poke.py` | drives every channel so the patch works with no phone |
+| `3. gyro_buffer.1.maxpat` | class demo: gyro rotation → `groove~` playback rate, through a resonant filter. Current version. |
+| `3. gyro_buffer.maxpat` | earlier version of the same demo, kept for reference |
 
-**Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
-at a time.** The monitor is for answering "is the phone sending this at all";
-the starter is for doing something with it.
+**All three of these patches contain a receiver, and a receiver owns UDP
+7400 — so open only one at a time.** `3. gyro_buffer.1.maxpat` embeds its own
+`ap.receive`, same as the starter and the monitor do; two open together fails
+to bind the port for whichever opened second. The monitor is for answering
+"is the phone sending this at all"; the starter is for doing something with
+it; `3. gyro_buffer.1` is a worked class demo — the phone's `ap.gyro`
+magnitude (rotation rate, any axis) drives `groove~`'s playback speed through
+a resonant filter, so turning the phone scrubs/pitches the sample. **It
+expects a soundfile named `tudor.wav`
+in `patches/max/`** — that file is intentionally not committed (see
+`.gitignore`; source audio isn't ours to redistribute) — so drop your own
+`.wav` there and either rename it to `tudor.wav` or edit the `buffer~ tudor
+tudor.wav` object to point at it. Click the `open` message to (re)load it.
 
 ## Pointing the phone at it
 

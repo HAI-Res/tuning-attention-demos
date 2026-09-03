@@ -25,3 +25,12 @@ ios/**/build/
 patches/max/*.wav
 patches/max/*.aif
 patches/max/*.aiff
+
+# OS and editor cruft
+.DS_Store
+
+# Screen recordings and generated audio dropped into the repo root by habit,
+# not source material anyone should pull.
+*.mov
+flowedit_out/
+samples/
