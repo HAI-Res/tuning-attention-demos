@@ -28,6 +28,40 @@ open patches/max/attention-phone.maxpat        # the starter patch, using both
 It listens on **UDP 7400**. Nothing else needs to be running: the phone talks
 to Max directly.
 
+## Install it once, so it works in every patch
+
+Max finds an abstraction only if it is on the search path, and that path
+includes the folder of the *open patch* — which an unsaved patch does not have.
+Paste one of these into a new untitled patch without installing and you get an
+empty box: not a broken object, a file Max cannot find.
+
+```sh
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/attention-phone
+```
+
+`~/Documents/Max 8/Library` is on Max's default search path, and a symlink keeps
+it pointing at the repo, so editing a file here changes what Max loads. **Then
+restart Max** — the search path is scanned at launch. Undo it with
+`rm ~/Documents/Max\ 8/Library/attention-phone`; nothing in the repo is touched.
+
+Three failure modes worth recognising, because all three look like a broken
+object rather than what they are:
+
+**An empty bpatcher is a missing file.** Check the name against what is actually
+in this folder before suspecting presentation mode.
+
+**A bpatcher showing patch cords is an out-of-date file.** Presentation mode is
+a property of the abstraction; an older copy of it on the search path will show
+its patching view instead.
+
+**Max caches abstractions for the life of a session.** Edit one of these while a
+patch using it is open and the open copy keeps the old version — which looks
+exactly like your change having no effect. Restart Max to pick it up.
+
+A checkout that is behind produces all three at once, and two copies of the same
+abstraction on the search path with different contents is worse still: which one
+Max loads depends on where the open patch is saved.
+
 | file | what it is |
 | --- | --- |
 | `attention-phone.maxpat` | starter patch — a receiver, three taps, one worked example |
