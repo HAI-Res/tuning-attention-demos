@@ -385,6 +385,24 @@ No magnitude outlet here — `sqrt(x²+y²+z²)` is meaningful for an
 accelerometer vector but not for an image-normalised point, so it's left out
 rather than shipped as a number nobody should use.
 
+**`hand-demo` also sends a derived per-hand metric**, address
+`/cv/hand/spread`, args `hand side spread` — `i i f`. `spread` is 0 when the
+five fingertips are together and ~1 when the hand is fully spread — see
+`hand_demo.py:hand_spread()`. Computed in Python (mean pairwise fingertip
+distance, normalised by palm width so it doesn't care how close the hand is
+to the camera) rather than rebuilt with `zl` objects in every patch that
+wants it — same "convert once at the edge" reasoning as the phone's unit
+table. It's a single scalar, not five landmark values, so it doesn't fit
+`cv.channel`'s outlet shape; tap it directly instead:
+
+```
+[receive cv.hand.left.spread]
+[receive cv.hand.right.spread]
+```
+
+`--spread-scale` (default 1.4, untested — tune to your hand/camera) sets the
+fully-spread-hand ratio that maps to 1.0.
+
 Sent at whatever `--fps` the demo is running at (30 by default) — this is data
 leaving the process, not something painted on screen, so it isn't subject to
 the 2 Hz display cap described above.
