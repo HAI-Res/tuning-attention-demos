@@ -74,22 +74,13 @@ Max loads depends on where the open patch is saved.
 | `qr.js` | draws the QR — no install, see below |
 | `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
 | `poke.py` | drives every channel so the patch works with no phone |
-| `3. gyro_buffer.1.maxpat` | class demo: gyro rotation → `groove~` playback rate, through a resonant filter. Current version. |
-| `3. gyro_buffer.maxpat` | earlier version of the same demo, kept for reference |
+| `attention-cv.maxpat` | separate pipeline's starter patch — a receiver, three taps, one worked example |
+| `cv.receive.maxpat` | receives attention-cv's pose/hand landmarks on UDP 7401, fans them out. Exactly one. |
+| `cv.channel.maxpat` | one tap: a landmark dropdown (pose + both hands) and its outlets |
 
-**All three of these patches contain a receiver, and a receiver owns UDP
-7400 — so open only one at a time.** `3. gyro_buffer.1.maxpat` embeds its own
-`ap.receive`, same as the starter and the monitor do; two open together fails
-to bind the port for whichever opened second. The monitor is for answering
-"is the phone sending this at all"; the starter is for doing something with
-it; `3. gyro_buffer.1` is a worked class demo — the phone's `ap.gyro`
-magnitude (rotation rate, any axis) drives `groove~`'s playback speed through
-a resonant filter, so turning the phone scrubs/pitches the sample. **It
-expects a soundfile named `tudor.wav`
-in `patches/max/`** — that file is intentionally not committed (see
-`.gitignore`; source audio isn't ours to redistribute) — so drop your own
-`.wav` there and either rename it to `tudor.wav` or edit the `buffer~ tudor
-tudor.wav` object to point at it. Click the `open` message to (re)load it.
+**Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
+at a time.** The monitor is for answering "is the phone sending this at all";
+the starter is for doing something with it.
 
 ## Pointing the phone at it
 
@@ -332,6 +323,71 @@ VPN puts an 18.x address on `utun4`), and a **self-assigned 169.254.x** address
 from an adapter whose DHCP never answered — which looks private, scores like it,
 and is never routable. That one really did win over live wifi until it was
 fixed.
+
+## Pose and hand from the laptop camera (attention-cv), on a separate port
+
+This is a second, independent pipeline — its own senders, its own port, its
+own receiver — not another tap on the phone receiver above. Same two-piece
+shape as the phone side, though:
+
+```
+[bpatcher cv.receive.maxpat]                 one per Max session; it owns UDP 7401
+[bpatcher cv.channel.maxpat @args cv.pose.right_wrist]   a tap: pick a landmark, use the outlets
+```
+
+```sh
+uv run pose-demo --osc 127.0.0.1:7401     # from demos/attention-cv
+uv run hand-demo --osc 127.0.0.1:7401     # both can send at once — same port, different address
+open patches/max/attention-cv.maxpat      # starter patch — a receiver, three taps, one worked example
+```
+
+`attention-cv.maxpat` is the fast path: it already embeds `cv.receive.maxpat`
+and three `cv.channel.maxpat` taps (right wrist, right index fingertip, nose),
+plus a worked example wiring the right wrist's `y` outlet to pitch — raise
+your hand for a higher note — the same shape as `attention-phone.maxpat`'s
+magnitude-to-pitch example. Open just that one file rather than assembling
+the pieces by hand.
+
+`x`/`y`/`z` are MediaPipe's own 0–1 image-normalised coordinates, not meters,
+and not the same convention as the phone's `accel`/`gyro` channels.
+
+**`pose-demo`** sends one OSC message per landmark per body, address
+`/cv/pose`, args `body landmark x y z visibility` — `i i f f f f`. `landmark`
+is BlazePose's fixed 33-point index (0 = nose, 15/16 = wrists, …); names in
+`attention-cv/src/attention_cv/pose_demo.py:POSE_LANDMARK_NAMES`.
+
+**`hand-demo`** sends one message per landmark per hand, address `/cv/hand`,
+args `hand side landmark x y z confidence` — `i i i f f f f`. `side` is
+0 = left, 1 = right (MediaPipe's own handedness classification, from the
+camera's point of view — mirrored video flips which physical hand looks
+which side); `landmark` is the 21-point index (0 = wrist, 4/8 = thumb/index
+tips, …); names in `attention_cv/hand_demo.py:HAND_LANDMARK_NAMES`.
+
+**`cv.receive.maxpat` fans every landmark out to a named send** —
+`cv.pose.<name>`, `cv.hand.left.<name>`, `cv.hand.right.<name>` — exactly the
+way `ap.receive` fans phone channels out to `ap.<channel>`. Its top two rows
+are a raw debug readout (whichever pose or hand message arrived most
+recently) — useful for confirming *something* is arriving before you go
+looking for a specific landmark.
+
+**`cv.channel.maxpat` taps one landmark**, the same trick as `ap.channel`: a
+dropdown over all 75 names, backed by one `[receive]` whose name the dropdown
+rewrites with `set <name>` at runtime. Outlets, left to right:
+
+| outlet | what |
+| --- | --- |
+| 0 | the whole reading as a list |
+| 1–3 | x, y, z |
+| 4 | visibility (pose) or handedness confidence (hand) |
+| 5 | body index (pose) or hand index (hand) |
+
+No magnitude outlet here — `sqrt(x²+y²+z²)` is meaningful for an
+accelerometer vector but not for an image-normalised point, so it's left out
+rather than shipped as a number nobody should use.
+
+Sent at whatever `--fps` the demo is running at (30 by default) — this is data
+leaving the process, not something painted on screen, so it isn't subject to
+the 2 Hz display cap described above.
 
 ## When nothing arrives
 
