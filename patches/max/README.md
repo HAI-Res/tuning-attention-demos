@@ -85,6 +85,38 @@ python3 patches/max/poke.py 127.0.0.1:7400 60
 Use it to tell "the patch is wrong" apart from "nothing is arriving", which is
 the first question every time.
 
+## More than one phone
+
+Every phone that arrives is published under its own name, at full rate, whether
+or not it is the one showing in the menu:
+
+```
+ap.<phone>.<channel>          ap.ada.gyro, ap.grisha.accel, ap.anna.head
+```
+
+So a tap can be pinned to a person:
+
+```
+[ap.channel ap.ada.gyro]      Ada's rotation, whoever the menu is showing
+[ap.channel ap.gyro]          rotation from whichever phone the menu selects
+```
+
+The bare form is the convenience: one menu, and every unqualified tap follows
+it. The qualified form is what a room needs — twenty phones each driving their
+own voice, all at once.
+
+The name is the one typed into the app, lowercased, with anything outside
+`a-z 0-9 - _` replaced by a dash: "Ada Lovelace" becomes `ap.ada-lovelace.…`.
+Dots become dashes too, so a name cannot fake a channel boundary. **A phone with
+no name set uses its device id**, so expect `ap.ios-e5b28f.accel` — the phone
+menu in the receiver is the list of what is actually available to type.
+
+`[send]` cannot be renamed at runtime (only `[receive]` can), so this fan-out
+happens inside the js with `messnamed()` rather than through objects in the
+patch. The receive name is built once per phone-and-channel and cached, because
+twenty phones at 60 Hz is thousands of these a second and rebuilding the string
+each time would be the only part of this that costs anything.
+
 ## Using a tap
 
 Copy an `ap.channel` bpatcher as many times as you like. Outlets, left to right:
@@ -134,7 +166,7 @@ writes itself, so a pasted copy behaves like a hand-placed one.
 | --- | --- |
 | **port** | 7400 on load. Change it and `udpreceive` rebinds immediately. |
 | **host / link** | this Mac's address, found automatically, and the configure link. Type over the host if the guess is wrong. |
-| **phone** | every name seen. The taps carry **one phone at a time** — the one selected here. `clear` forgets the list, worth doing when half the room has put their phones away. |
+| **phone** | every name seen. This chooses which phone the *unqualified* taps follow — see below; taps naming a phone ignore it. `clear` forgets the list, worth doing when half the room has put their phones away. |
 | **throughput** | phones seen and messages/second, counting *all* phones. |
 | **last address** | the most recent OSC address, verbatim. The fastest way to see that packets are arriving but the names are not what you expected. |
 

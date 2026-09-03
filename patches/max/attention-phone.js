@@ -25,6 +25,7 @@
 // Addresses are /<prefix>/<name>/<channel>; only the last two components are
 // used, so a changed --osc-prefix (or a differently configured app) still works.
 //
+//   messnamed ap.<phone>.<channel>              live, full rate, every phone
 //   outlet 0  <channel> <values...>              live, full rate, selected phone
 //   outlet 1  <channel> <hz> <values...> [<mag>] once per window, for the screen
 //   outlet 2  umenu commands                     clear / append <name> / set <n>
@@ -83,7 +84,7 @@ var intervalMs = DEFAULT_INTERVAL;
 var frozen = false;
 
 function accumulator(spec) {
-    var a = { n: 0, sum: [], magSum: 0, shown: [], seen: false };
+    var a = { n: 0, sum: [], magSum: 0, shown: [], seen: false, named: '' };
     var slots = spec ? spec.axes : 1;
     for (var i = 0; i < slots; i++) { a.sum.push(0); a.shown.push(0); }
     if (spec && spec.vector) { a.shown.push(0); }   // trailing magnitude
@@ -129,11 +130,43 @@ function anything() {
         }
     }
 
+    // Every phone, addressed by name: a tap written as [ap.channel ap.ada.gyro]
+    // gets Ada whoever the menu happens to be showing. [send] cannot be renamed
+    // at runtime and [receive] can, so the fan-out has to happen here rather
+    // than through objects in the patch.
+    //
+    // The name is built once per phone-and-channel and kept on the accumulator:
+    // twenty phones at 60 Hz is thousands of these a second, and rebuilding the
+    // string every time is the one part of this that would actually cost.
+    if (!acc.named) { acc.named = 'ap.' + slug(who) + '.' + channel; }
+    messnamed.apply(null, [acc.named].concat(values));
+
     if (who === order[sel]) {
+        // The menu-selected phone is also published under the bare channel
+        // name, so [ap.channel ap.gyro] means "whichever phone is selected".
         // An array goes out as a Max list; a leading symbol makes it a message
         // named after the channel, which is what [route] downstream matches.
         outlet(0, [channel].concat(values));
     }
+}
+
+/**
+ * A phone name as a Max symbol.
+ *
+ * OSC already restricted this to a-z 0-9 - _ . on the way in, but a dot would
+ * make `ap.<name>.<channel>` ambiguous to read, so dots become dashes. Anything
+ * unexpected is replaced rather than passed through, because a name typed by a
+ * student ends up in a global symbol here.
+ */
+function slug(name) {
+    var out = '';
+    var allowed = 'abcdefghijklmnopqrstuvwxyz0123456789-_';
+    var lower = String(name).toLowerCase();
+    for (var i = 0; i < lower.length; i++) {
+        var ch = lower.charAt(i);
+        out += allowed.indexOf(ch) >= 0 ? ch : '-';
+    }
+    return out === '' ? 'phone' : out;
 }
 
 // umenu's left outlet, via [prepend select]. Index rather than the item text,
