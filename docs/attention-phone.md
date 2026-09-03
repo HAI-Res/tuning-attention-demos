@@ -1,29 +1,29 @@
 # attention-phone
 
 Stream real phone sensors (accelerometer, gyro, attitude, compass) into
-sound, live, for *Tuning Attention* (21M.369). Nothing to install on the
-phone — open a URL, tap Start, movement is on the laptop.
+sound, live, for *Tuning Attention* (21M.369).
 
 ## Quick start
 
 ```sh
-uv sync
-uv run phone-demo
+open patches/max/attention-phone.maxpat
 ```
 
-Scan the QR code it prints, on a phone on the same wifi. Tap **Start**,
-allow motion access when iOS asks. Live values show in the terminal.
+Point the phone's camera at the QR code in the patch — no laptop-side server
+needed, the phone talks to Max directly. Needs the native **Ductus** app on
+the phone (see [`ios/README.md`](ios/README.md)). Full walkthrough:
+[`patches/max/README.md`](patches/max/README.md).
 
-No phone yet? `uv run fake-phone --insecure -n 4 --hz 60` simulates a few.
+## Two ways in
 
-## Three ways in
-
-- **Browser** — what students use. No install, ~60 Hz, works on Android too.
-- **Max** — vanilla Max 8 patches that receive the same data. See
+- **Max** — vanilla Max 8 patches, phone talks to it directly. See
   [`patches/max/README.md`](patches/max/README.md).
-- **Native iOS app** (*Ductus*, instructor use) — reaches AirPods head
-  orientation and mic onset detection, at 100 Hz. See
-  [`ios/README.md`](ios/README.md).
+- **Native iOS app** (*Ductus*) — also reaches AirPods head orientation and
+  mic onset detection, at 100 Hz. See [`ios/README.md`](ios/README.md).
+
+(There's also a browser-based sender path via `uv run phone-demo` — not
+verified working right now, so use the app + Max path above instead until
+that's sorted out.)
 
 ## Sending elsewhere
 
