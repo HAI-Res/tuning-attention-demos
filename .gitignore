@@ -20,3 +20,8 @@ ios/**/DerivedData/
 ios/**/build/
 *.xcuserstate
 .claude/worktrees/
+
+# Audio used as source material — not ours to redistribute, and large.
+patches/max/*.wav
+patches/max/*.aif
+patches/max/*.aiff
