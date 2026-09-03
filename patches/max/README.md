@@ -7,8 +7,19 @@ Two reusable pieces rather than one big patch:
 
 ```
 [bpatcher ap.receive.maxpat]                   one per Max session; it owns the socket
+[bpatcher ap.qr.maxpat]                        the code to scan; one in every patch
 [bpatcher ap.channel.maxpat @args ap.gyro]     a tap: pick a channel, use the outlets
 ```
+
+**Only `ap.receive` is limited to one**, because it owns UDP 7400 and a second
+one cannot bind it. `ap.qr` owns no socket, so put one in every patch you build
+and copy it freely; it draws whatever port the receiver is on, because the
+receiver broadcasts that on `ap.port` and every code redraws when it changes. A
+code pointing at a port nothing is listening on is worse than no code at all.
+
+Taps read from named sends, which are global across Max, so **one receiver
+anywhere feeds every tap in every open patch** — including patches that contain
+no receiver themselves.
 
 ```sh
 open patches/max/attention-phone.maxpat        # the starter patch, using both
@@ -21,7 +32,8 @@ to Max directly.
 | --- | --- |
 | `attention-phone.maxpat` | starter patch — a receiver, three taps, one worked example |
 | `attention-phone-monitor.maxpat` | all seventeen channels with their arrival rates |
-| `ap.receive.maxpat` | the receiver: socket, address, phone chooser, throughput |
+| `ap.receive.maxpat` | the receiver: the socket and the phone chooser. Exactly one. |
+| `ap.qr.maxpat` | the address as a scannable code. As many as you like. |
 | `ap.channel.maxpat` | one tap: a channel dropdown and its outlets |
 | `attention-phone.js` | splits the OSC address; the reason is below |
 | `address.js` | this Mac's address and the QR, via Node for Max |
@@ -95,6 +107,26 @@ argument** — `@args ap.head` — so edit that to make a choice stick.
 **You must lock the patch (⌘E) to click a dropdown.** Unlocked, clicking a
 bpatcher selects it instead of operating the menu inside. This is the first
 thing to check when a menu appears to do nothing.
+
+**Or skip the bpatcher entirely.** `ap.channel` has no inlets, so it works as a
+plain object box too:
+
+```
+[ap.channel ap.gyro]
+```
+
+Same six outlets, no dropdown — and nothing that can lose its view state. The
+argument is what persists across a reopen anyway; the menu was only ever a way
+to explore. If bpatchers are giving you trouble, this is the sturdier form.
+
+### Why a copy-pasted bpatcher used to lose its presentation view
+
+`viewvisibility` is what makes a bpatcher show the child's *presentation* view
+rather than its patching view, cables and all — and it lives on **the box in
+your patch**, not on the child patcher. Generated bpatchers that omit it look
+right when first placed and revert the moment they are copied. Every bpatcher
+here now carries it, along with the border, background and scroll keys Max
+writes itself, so a pasted copy behaves like a hand-placed one.
 
 ## What the receiver shows
 

@@ -89,8 +89,8 @@
      "patching_rect": [
       20.0,
       70.0,
-      428.0,
-      258.0
+      208.0,
+      72.0
      ],
      "style": "",
      "numinlets": 0,
@@ -98,6 +98,13 @@
      "outlettype": [],
      "name": "ap.receive.maxpat",
      "embed": 0,
+     "viewvisibility": 1,
+     "bgmode": 0,
+     "border": 0,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
      "offset": [
       0.0,
       0.0
@@ -109,32 +116,61 @@
      "id": "obj-4",
      "maxclass": "comment",
      "patching_rect": [
-      476.0,
-      70.0,
-      260.0,
-      34.0
+      20.0,
+      148.0,
+      240.0,
+      48.0
      ],
      "style": "",
-     "text": "The receiver. Exactly one per Max session \u2014 it owns the UDP socket.",
+     "text": "The receiver \u2014 exactly one per Max session, because it owns the UDP socket. Everything else reads from it.",
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
      "fontsize": 12,
-     "linecount": 2
+     "linecount": 3
     }
    },
    {
     "box": {
      "id": "obj-5",
+     "maxclass": "bpatcher",
+     "patching_rect": [
+      280.0,
+      70.0,
+      258.0,
+      284.0
+     ],
+     "style": "",
+     "numinlets": 0,
+     "numoutlets": 0,
+     "outlettype": [],
+     "name": "ap.qr.maxpat",
+     "embed": 0,
+     "viewvisibility": 1,
+     "bgmode": 0,
+     "border": 0,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "offset": [
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-6",
      "maxclass": "comment",
      "patching_rect": [
-      476.0,
-      112.0,
-      260.0,
+      554.0,
+      70.0,
+      280.0,
       62.0
      ],
      "style": "",
-     "text": "Point a phone's camera at the code and it configures the app in one tap: host, port and transport together. It redraws itself if the address changes.",
+     "text": "Point a phone's camera at the code: it configures the app in one tap \u2014 host, port and transport together \u2014 and redraws itself if the address changes.",
      "numinlets": 1,
      "numoutlets": 0,
      "fontname": "Arial",
@@ -144,7 +180,26 @@
    },
    {
     "box": {
-     "id": "obj-6",
+     "id": "obj-7",
+     "maxclass": "comment",
+     "patching_rect": [
+      554.0,
+      140.0,
+      280.0,
+      48.0
+     ],
+     "style": "",
+     "text": "This one owns no socket, so put one in every patch you build. Copy and paste it.",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "fontname": "Arial",
+     "fontsize": 12,
+     "linecount": 3
+    }
+   },
+   {
+    "box": {
+     "id": "obj-8",
      "maxclass": "comment",
      "patching_rect": [
       20.0,
@@ -162,7 +217,7 @@
    },
    {
     "box": {
-     "id": "obj-7",
+     "id": "obj-9",
      "maxclass": "comment",
      "patching_rect": [
       20.0,
@@ -181,7 +236,7 @@
    },
    {
     "box": {
-     "id": "obj-8",
+     "id": "obj-10",
      "maxclass": "bpatcher",
      "patching_rect": [
       20.0,
@@ -202,6 +257,13 @@
      ],
      "name": "ap.channel.maxpat",
      "embed": 0,
+     "viewvisibility": 1,
+     "bgmode": 0,
+     "border": 0,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
      "offset": [
       0.0,
       0.0
@@ -213,7 +275,7 @@
    },
    {
     "box": {
-     "id": "obj-9",
+     "id": "obj-11",
      "maxclass": "comment",
      "patching_rect": [
       20.0,
@@ -232,7 +294,7 @@
    },
    {
     "box": {
-     "id": "obj-10",
+     "id": "obj-12",
      "maxclass": "bpatcher",
      "patching_rect": [
       310.0,
@@ -253,6 +315,13 @@
      ],
      "name": "ap.channel.maxpat",
      "embed": 0,
+     "viewvisibility": 1,
+     "bgmode": 0,
+     "border": 0,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
      "offset": [
       0.0,
       0.0
@@ -264,7 +333,7 @@
    },
    {
     "box": {
-     "id": "obj-11",
+     "id": "obj-13",
      "maxclass": "comment",
      "patching_rect": [
       310.0,
@@ -283,7 +352,7 @@
    },
    {
     "box": {
-     "id": "obj-12",
+     "id": "obj-14",
      "maxclass": "bpatcher",
      "patching_rect": [
       600.0,
@@ -304,6 +373,13 @@
      ],
      "name": "ap.channel.maxpat",
      "embed": 0,
+     "viewvisibility": 1,
+     "bgmode": 0,
+     "border": 0,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
      "offset": [
       0.0,
       0.0
@@ -315,7 +391,7 @@
    },
    {
     "box": {
-     "id": "obj-13",
+     "id": "obj-15",
      "maxclass": "comment",
      "patching_rect": [
       600.0,
@@ -334,7 +410,7 @@
    },
    {
     "box": {
-     "id": "obj-14",
+     "id": "obj-16",
      "maxclass": "comment",
      "patching_rect": [
       20.0,
@@ -352,7 +428,7 @@
    },
    {
     "box": {
-     "id": "obj-15",
+     "id": "obj-17",
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
@@ -373,7 +449,7 @@
    },
    {
     "box": {
-     "id": "obj-16",
+     "id": "obj-18",
      "maxclass": "comment",
      "patching_rect": [
       216.0,
@@ -392,7 +468,7 @@
    },
    {
     "box": {
-     "id": "obj-17",
+     "id": "obj-19",
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
@@ -413,7 +489,7 @@
    },
    {
     "box": {
-     "id": "obj-18",
+     "id": "obj-20",
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
@@ -435,7 +511,7 @@
    },
    {
     "box": {
-     "id": "obj-19",
+     "id": "obj-21",
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
@@ -456,7 +532,7 @@
    },
    {
     "box": {
-     "id": "obj-20",
+     "id": "obj-22",
      "maxclass": "newobj",
      "patching_rect": [
       20.0,
@@ -477,7 +553,7 @@
    },
    {
     "box": {
-     "id": "obj-21",
+     "id": "obj-23",
      "maxclass": "ezdac~",
      "patching_rect": [
       20.0,
@@ -492,7 +568,7 @@
    },
    {
     "box": {
-     "id": "obj-22",
+     "id": "obj-24",
      "maxclass": "toggle",
      "patching_rect": [
       76.0,
@@ -511,7 +587,7 @@
    },
    {
     "box": {
-     "id": "obj-23",
+     "id": "obj-25",
      "maxclass": "comment",
      "patching_rect": [
       106.0,
@@ -529,7 +605,7 @@
    },
    {
     "box": {
-     "id": "obj-24",
+     "id": "obj-26",
      "maxclass": "comment",
      "patching_rect": [
       424.0,
@@ -551,13 +627,13 @@
    {
     "patchline": {
      "destination": [
-      "obj-15",
+      "obj-17",
       0
      ],
      "disabled": 0,
      "hidden": 0,
      "source": [
-      "obj-8",
+      "obj-10",
       5
      ]
     }
@@ -565,41 +641,13 @@
    {
     "patchline": {
      "destination": [
-      "obj-17",
-      0
-     ],
-     "disabled": 0,
-     "hidden": 0,
-     "source": [
-      "obj-15",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "destination": [
-      "obj-18",
-      0
-     ],
-     "disabled": 0,
-     "hidden": 0,
-     "source": [
-      "obj-17",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "destination": [
       "obj-19",
       0
      ],
      "disabled": 0,
      "hidden": 0,
      "source": [
-      "obj-18",
+      "obj-17",
       0
      ]
     }
@@ -635,13 +683,13 @@
    {
     "patchline": {
      "destination": [
-      "obj-21",
-      1
+      "obj-22",
+      0
      ],
      "disabled": 0,
      "hidden": 0,
      "source": [
-      "obj-20",
+      "obj-21",
       0
      ]
     }
@@ -649,13 +697,41 @@
    {
     "patchline": {
      "destination": [
-      "obj-21",
+      "obj-23",
       0
      ],
      "disabled": 0,
      "hidden": 0,
      "source": [
       "obj-22",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-23",
+      1
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-22",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-23",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-24",
       0
      ]
     }
