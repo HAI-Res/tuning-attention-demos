@@ -15,7 +15,7 @@
 //   in    port <n>   the UDP port the patch is listening on
 //   in    bang       look again (the address changes when you change network)
 //   out   host <ip>  best guess at the address a phone should send to
-//   out   url <url>  attention-phone:// link that configures the app in one tap
+//   out   url <url>  ductus:// link that configures the app in one tap
 //   out   alt <ip…>  every other address, because the guess is sometimes wrong
 //   out   qr <path>  a PNG of that link, for [fpic] to show and a phone to scan
 
@@ -72,7 +72,7 @@ function emit() {
         return;
     }
     const best = list[0];
-    const url = 'attention-phone://configure?host=' + best.ip + '&osc=' + port + '&mode=osc';
+    const url = 'ductus://configure?host=' + best.ip + '&osc=' + port + '&mode=osc';
 
     maxApi.outlet('host', best.ip);
     maxApi.outlet('url', url);

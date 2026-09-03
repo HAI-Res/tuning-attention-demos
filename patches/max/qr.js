@@ -11,7 +11,7 @@
 // runs, with nothing fetched and nothing installed.
 //
 //   const qr = require('./qr.js');
-//   fs.writeFileSync('qr.png', qr.png('attention-phone://configure?...'));
+//   fs.writeFileSync('qr.png', qr.png('ductus://configure?...'));
 
 'use strict';
 
