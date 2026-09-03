@@ -72,6 +72,11 @@ function emit() {
         return;
     }
     const best = list[0];
+    // `ductus://`, not `attention-phone://`. The app registers exactly one URL
+    // scheme (CFBundleURLSchemes: [ductus]) and it was renamed with the app —
+    // a code carrying the old scheme scans to nothing at all, because iOS
+    // routes by scheme and no installed app claims that one any more. It fails
+    // silently and looks like a broken camera.
     const url = 'ductus://configure?host=' + best.ip + '&osc=' + port + '&mode=osc';
 
     maxApi.outlet('host', best.ip);
