@@ -111,16 +111,6 @@ prompt on the first packet, and until it is answered nothing arrives. And
 reinstalling the app from Xcode can reset its `UserDefaults`, which lands it on
 `mode=websocket` with a blank host — so re-open the link after a rebuild.
 
-## Or from `phone-demo`
-
-```sh
-uv run phone-demo --osc 127.0.0.1:7400
-```
-
-Same addresses, same units, so the patch does not care which is upstream.
-Browsers only reach six of the seventeen channels; the rest stay at 0 Hz, which
-is the honest answer rather than an empty row.
-
 ## No phone at hand
 
 ```sh
