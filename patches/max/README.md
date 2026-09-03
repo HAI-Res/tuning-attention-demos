@@ -3,7 +3,31 @@
 Vanilla Max 8 — no packages, no externals, no CNMAT odot, because this has to
 open on twenty students' stock installs.
 
-Two reusable pieces rather than one big patch:
+This document covers the phone → Max pipeline only: getting a real phone
+talking to a Max patch. The camera/MediaPipe pipeline is separate work in
+progress on the `wip/attention-cv` branch — its own README section will land
+here once that's ready to use. For now, this is just the Max patches.
+
+## Quick start
+
+```sh
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/attention-phone   # once, then restart Max
+open patches/max/attention-phone.maxpat                                   # the starter patch
+```
+
+Point your phone's camera at the QR code in the receiver block — it
+configures the Ductus app in one tap (host, port, transport together) and
+starts sending immediately. iOS will ask for **Local Network** permission on
+the first packet; until you answer that, nothing arrives. No laptop-side
+server needed — the phone talks to Max directly over UDP.
+
+No phone at hand yet? `python3 patches/max/poke.py` fakes two phones sending
+every channel, so you can confirm the patch itself works before a real phone
+enters the picture. If the patch shows nothing even with `poke.py` running,
+that's a patch problem; if `poke.py` works but a real phone doesn't, see
+[When nothing arrives](#when-nothing-arrives) below.
+
+## The two reusable pieces
 
 ```
 [bpatcher ap.receive.maxpat]                   one per Max session; it owns the socket
@@ -21,12 +45,34 @@ Taps read from named sends, which are global across Max, so **one receiver
 anywhere feeds every tap in every open patch** — including patches that contain
 no receiver themselves.
 
-```sh
-open patches/max/attention-phone.maxpat        # the starter patch, using both
-```
+| file | what it is |
+| --- | --- |
+| `attention-phone.maxpat` | starter patch — a receiver, three taps, one worked example |
+| `attention-phone-monitor.maxpat` | all seventeen channels with their arrival rates |
+| `ap.receive.maxpat` | the receiver: the socket and the phone chooser. Exactly one. |
+| `ap.qr.maxpat` | the address as a scannable code. As many as you like. |
+| `ap.channel.maxpat` | one tap: a channel dropdown and its outlets |
+| `attention-phone.js` | splits the OSC address; the reason is below |
+| `address.js` | this Mac's address and the QR, via Node for Max |
+| `qr.js` | draws the QR — no install, see below |
+| `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
+| `poke.py` | drives every channel so the patch works with no phone |
+| `3. gyro_buffer.1.maxpat` | class demo: gyro rotation → `groove~` playback rate, through a resonant filter. Current version. |
+| `3. gyro_buffer.maxpat` | earlier version of the same demo, kept for reference |
 
-It listens on **UDP 7400**. Nothing else needs to be running: the phone talks
-to Max directly.
+**All three of `attention-phone.maxpat`, `attention-phone-monitor.maxpat`
+and `3. gyro_buffer.1.maxpat` contain a receiver, and a receiver owns UDP
+7400 — so open only one at a time.** Two open together fails to bind the
+port for whichever opened second. The monitor is for answering "is the phone
+sending this at all"; the starter is for doing something with it;
+`3. gyro_buffer.1` is a worked class demo — the phone's `ap.gyro` magnitude
+(rotation rate, any axis) drives `groove~`'s playback speed through a
+resonant filter, so turning the phone scrubs/pitches the sample. **It expects
+a soundfile named `tudor.wav` in `patches/max/`** — that file is
+intentionally not committed (see `.gitignore`; source audio isn't ours to
+redistribute) — so drop your own `.wav` there and either rename it to
+`tudor.wav` or edit the `buffer~ tudor tudor.wav` object to point at it.
+Click the `open` message to (re)load it.
 
 ## Install it once, so it works in every patch
 
@@ -62,35 +108,6 @@ A checkout that is behind produces all three at once, and two copies of the same
 abstraction on the search path with different contents is worse still: which one
 Max loads depends on where the open patch is saved.
 
-| file | what it is |
-| --- | --- |
-| `attention-phone.maxpat` | starter patch — a receiver, three taps, one worked example |
-| `attention-phone-monitor.maxpat` | all seventeen channels with their arrival rates |
-| `ap.receive.maxpat` | the receiver: the socket and the phone chooser. Exactly one. |
-| `ap.qr.maxpat` | the address as a scannable code. As many as you like. |
-| `ap.channel.maxpat` | one tap: a channel dropdown and its outlets |
-| `attention-phone.js` | splits the OSC address; the reason is below |
-| `address.js` | this Mac's address and the QR, via Node for Max |
-| `qr.js` | draws the QR — no install, see below |
-| `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
-| `poke.py` | drives every channel so the patch works with no phone |
-| `3. gyro_buffer.1.maxpat` | class demo: gyro rotation → `groove~` playback rate, through a resonant filter. Current version. |
-| `3. gyro_buffer.maxpat` | earlier version of the same demo, kept for reference |
-
-**All three of these patches contain a receiver, and a receiver owns UDP
-7400 — so open only one at a time.** `3. gyro_buffer.1.maxpat` embeds its own
-`ap.receive`, same as the starter and the monitor do; two open together fails
-to bind the port for whichever opened second. The monitor is for answering
-"is the phone sending this at all"; the starter is for doing something with
-it; `3. gyro_buffer.1` is a worked class demo — the phone's `ap.gyro`
-magnitude (rotation rate, any axis) drives `groove~`'s playback speed through
-a resonant filter, so turning the phone scrubs/pitches the sample. **It
-expects a soundfile named `tudor.wav`
-in `patches/max/`** — that file is intentionally not committed (see
-`.gitignore`; source audio isn't ours to redistribute) — so drop your own
-`.wav` there and either rename it to `tudor.wav` or edit the `buffer~ tudor
-tudor.wav` object to point at it. Click the `open` message to (re)load it.
-
 ## Pointing the phone at it
 
 **Point the phone's camera at the QR in the receiver block.** It sets host, port
@@ -110,16 +127,6 @@ Two things to expect on a first run. iOS raises its **Local Network** permission
 prompt on the first packet, and until it is answered nothing arrives. And
 reinstalling the app from Xcode can reset its `UserDefaults`, which lands it on
 `mode=websocket` with a blank host — so re-open the link after a rebuild.
-
-## No phone at hand
-
-```sh
-python3 patches/max/poke.py                 # two phones, all channels, 10s
-python3 patches/max/poke.py 127.0.0.1:7400 60
-```
-
-Use it to tell "the patch is wrong" apart from "nothing is arriving", which is
-the first question every time.
 
 ## More than one phone
 
@@ -187,22 +194,13 @@ Same six outlets, no dropdown — and nothing that can lose its view state. The
 argument is what persists across a reopen anyway; the menu was only ever a way
 to explore. If bpatchers are giving you trouble, this is the sturdier form.
 
-### Why a copy-pasted bpatcher used to lose its presentation view
-
-`viewvisibility` is what makes a bpatcher show the child's *presentation* view
-rather than its patching view, cables and all — and it lives on **the box in
-your patch**, not on the child patcher. Generated bpatchers that omit it look
-right when first placed and revert the moment they are copied. Every bpatcher
-here now carries it, along with the border, background and scroll keys Max
-writes itself, so a pasted copy behaves like a hand-placed one.
-
 ## What the receiver shows
 
 | | |
 | --- | --- |
 | **port** | 7400 on load. Change it and `udpreceive` rebinds immediately. |
 | **host / link** | this Mac's address, found automatically, and the configure link. Type over the host if the guess is wrong. |
-| **phone** | every name seen. This chooses which phone the *unqualified* taps follow — see below; taps naming a phone ignore it. `clear` forgets the list, worth doing when half the room has put their phones away. |
+| **phone** | every name seen. This chooses which phone the *unqualified* taps follow — see above; taps naming a phone ignore it. `clear` forgets the list, worth doing when half the room has put their phones away. |
 | **throughput** | phones seen and messages/second, counting *all* phones. |
 | **last address** | the most recent OSC address, verbatim. The fastest way to see that packets are arriving but the names are not what you expected. |
 
@@ -236,9 +234,38 @@ that makes a patch unusable, not merely busy. So in the monitor:
 None of this touches the data. Taps get the full-rate stream, so a mapping runs
 at the phone's real rate while the screen is frozen solid.
 
-## Why there is a `js` in the middle of it
+## When nothing arrives
 
-The one thing worth reading before editing.
+UDP has no notion of a peer that is not there, so a wrong address, a wrong port
+and a blocked network all look identical: silence. In order of how often it is
+the cause —
+
+1. **The Local Network prompt**, or a rebuild that reset the app's settings.
+2. **The port.** The app's OSC port and the number box must match. 57120 is
+   SuperCollider's default and a reasonable thing to type by habit; on this
+   machine `ollama` also binds it. `lsof -nP -iUDP:<port>` before blaming the
+   patch.
+3. **The address.** `uv run phone-demo --check` prints the one a phone can
+   actually reach, which is *not* the one with the MIT VPN connected.
+4. **Client isolation** on the wifi, which blocks phone→laptop traffic
+   outright. Nothing on the laptop can fix it. `phone-demo --tunnel` is a
+   WebSocket path and carries no UDP, so run `phone-demo --osc 127.0.0.1:7400`
+   alongside it and let the laptop forward into Max.
+
+`python3 patches/max/poke.py` rules out the patch itself in about five seconds,
+which is worth doing before any of the above.
+
+**The app's own status light cannot help you here.** OSC over UDP has no reply,
+so the app can honestly say it is *sending* and can never say anything
+*arrived* — that is what "Sending — arrival not confirmable" means. The
+receiver's `last address` box is the ground truth.
+
+## Appendix: why it's built this way
+
+Background for anyone editing these patches. None of it is needed just to run
+the demo.
+
+### Why there is a `js` in the middle of it
 
 **Max 8's `udpreceive` decodes OSC itself and hands the address over as the
 message *selector*.** `/phone/ada/accel 0.1 0.2 9.8` arrives as a message named
@@ -271,7 +298,7 @@ seventeen rows and a tap does not.
 folder; move a `.maxpat` somewhere else on its own and the `js` object fails to
 create, taking every patch cord attached to it with it.
 
-### If `js` does not work here at all
+#### If `js` does not work here at all
 
 Unverified as of 2026-09-01: the phone provably delivers 99 Hz to port 7400
 (packet capture), but nobody has yet confirmed the `js` object instantiates on
@@ -288,7 +315,8 @@ absent and `fromsymbol` leaking, only two real options remain:
 
 Decide which before rebuilding anything; both are real, neither is a small
 edit to what is here.
-## Why the QR needs nothing installed
+
+### Why the QR needs nothing installed
 
 The app-to-Max path is meant to work with **no laptop-side server at all**, and
 a QR that needed one would have quietly taken that away. The first version
@@ -307,7 +335,7 @@ Verified by decoding rather than by inspection — 27 generated codes were read
 back with macOS's own QR detector, the same class of decoder a phone camera
 uses, and every one returned exactly the URL encoded.
 
-## Where the address comes from
+### Where the address comes from
 
 Max has no object that reports a local IP and its `js` cannot enumerate network
 interfaces, so `address.js` runs under **`node.script`** — Node for Max, bundled
@@ -323,28 +351,11 @@ from an adapter whose DHCP never answered — which looks private, scores like i
 and is never routable. That one really did win over live wifi until it was
 fixed.
 
-## When nothing arrives
+### Why a copy-pasted bpatcher used to lose its presentation view
 
-UDP has no notion of a peer that is not there, so a wrong address, a wrong port
-and a blocked network all look identical: silence. In order of how often it is
-the cause —
-
-1. **The Local Network prompt**, or a rebuild that reset the app's settings.
-2. **The port.** The app's OSC port and the number box must match. 57120 is
-   SuperCollider's default and a reasonable thing to type by habit; on this
-   machine `ollama` also binds it. 7401 is in use too — `attention-cv` sends
-   there. `lsof -nP -iUDP:<port>` before blaming the patch.
-3. **The address.** `uv run phone-demo --check` prints the one a phone can
-   actually reach, which is *not* the one with the MIT VPN connected.
-4. **Client isolation** on the wifi, which blocks phone→laptop traffic
-   outright. Nothing on the laptop can fix it. `phone-demo --tunnel` is a
-   WebSocket path and carries no UDP, so run `phone-demo --osc 127.0.0.1:7400`
-   alongside it and let the laptop forward into Max.
-
-`python3 patches/max/poke.py` rules out the patch itself in about five seconds,
-which is worth doing before any of the above.
-
-**The app's own status light cannot help you here.** OSC over UDP has no reply,
-so the app can honestly say it is *sending* and can never say anything
-*arrived* — that is what "Sending — arrival not confirmable" means. The
-receiver's `last address` box is the ground truth.
+`viewvisibility` is what makes a bpatcher show the child's *presentation* view
+rather than its patching view, cables and all — and it lives on **the box in
+your patch**, not on the child patcher. Generated bpatchers that omit it look
+right when first placed and revert the moment they are copied. Every bpatcher
+here now carries it, along with the border, background and scroll keys Max
+writes itself, so a pasted copy behaves like a hand-placed one.
