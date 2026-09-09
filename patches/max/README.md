@@ -77,6 +77,8 @@ Max loads depends on where the open patch is saved.
 | `attention-cv.maxpat` | separate pipeline's starter patch — a receiver, three taps, one worked example |
 | `cv.receive.maxpat` | receives attention-cv's pose/hand landmarks on UDP 7401, fans them out. Exactly one. |
 | `cv.channel.maxpat` | one tap: a landmark dropdown (pose + both hands) and its outlets |
+| `cv-pinch-synth.maxpat` | two-hand demo: pinch → lowpass, hand height → square/saw blend, hand left/right → stereo pan, right hand a fifth up. Listens on 7500 itself. |
+| `cv-pinch-voice.maxpat` | one voice of the above; argument is the pitch ratio. Used twice by `cv-pinch-synth`. |
 
 **Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
 at a time.** The monitor is for answering "is the phone sending this at all";
@@ -323,6 +325,83 @@ VPN puts an 18.x address on `utun4`), and a **self-assigned 169.254.x** address
 from an adapter whose DHCP never answered — which looks private, scores like it,
 and is never routable. That one really did win over live wifi until it was
 fixed.
+
+## Two hands, two saw/square voices (`cv-pinch-synth.maxpat`)
+
+```sh
+open patches/max/cv-pinch-synth.maxpat
+cd ~/Documents/2026/MIT/tunning-attention-class/.claude/worktrees/mediapipe-osc
+uv run track-demo --osc max            # the camera, onto UDP 7500
+```
+
+Each hand on the camera is one voice; the left hand plays the base pitch and
+the right hand the same voice a fifth up (× 1.5). For either hand:
+
+| the hand does | the sound does | how |
+| --- | --- | --- |
+| pinches / opens thumb and index | lowpass sweeps 110 Hz → 8.4 kHz | `/cv/hand/<side>/pinch` (metres) → `scale` → `mtof` → `line~` → `lores~` |
+| moves down ↔ up in the frame | square at unity ↔ saw at unity, a full mix in the middle | `/cv/hand/<side>/wrist` y (0–1, 0 at the top) → `expr sin/cos($f1*π/2)` → `line~` → `*~` |
+| leaves the frame | fades out over 300 ms | `/cv/hand/<side>/present` → `change` → `line~` → `*~` |
+| moves left ↔ right in the frame | pans left ↔ right in the stereo field, equal-power | `/cv/hand/<side>/wrist` x (0–1, 0 at the left of the mirrored view) → `expr cos/sin($f1*π/2)` → `line~` → `*~` on each channel |
+
+Two files: `cv-pinch-synth.maxpat` is the one to open — it holds the socket,
+the six-address `route`, the shared controls (base Hz, the two pinch
+calibration distances, resonance) and two copies of the voice. The voice
+itself is `cv-pinch-voice.maxpat`, an abstraction whose one argument is the
+pitch ratio (`cv-pinch-voice 1.` and `cv-pinch-voice 1.5` — **with the dot**, or
+`* #1` multiplies as an integer and 110. becomes 110 and 1.5 becomes 1). It
+must stay in this folder next to the main patch, same rule as the `.js` files.
+If you edit the voice, keep its inlets and outlets where they are left to
+right: **Max numbers an abstraction's inlets by x position, not by when they
+were made**, and moving one re-plugs every cord in the main patch silently —
+the first version of this patch was inaudible for exactly that reason, with
+110 Hz going into the wrist unpack and 0.02 into the presence gate.
+No `js`, no receiver bpatcher: the six addresses are fixed and known, so a
+plain `route` is enough.
+
+Two things to know before wondering why it does not sound right:
+
+**The pinch distance is in metres and needs calibrating to the hand in front
+of the camera.** The two shared boxes are the closed and open distances the
+sweep runs between, defaulting to 0.02 and 0.12. Read a hand's 2 Hz pinch
+readout with fingers touching, then wide apart, and type those in. Outside the
+range is clipped, not extrapolated, so a mis-calibration sounds flat at one end
+rather than exploding.
+
+**The mapping is exponential on purpose.** The pinch goes to a MIDI note number
+first and then through `mtof`, so equal finger travel is equal *pitch* travel of
+the cutoff. A linear Hz mapping spends most of the finger's range above 4 kHz
+where nothing audible changes.
+
+The blend is an equal-power pan — square gain `sin(y·π/2)`, saw gain
+`cos(y·π/2)` — so the two gains sum to unity *power* everywhere and the middle
+is a full mix. MediaPipe's y is 0 at the top of the frame and 1 at the bottom,
+which is why sin and cos are the way round they are: a low hand is the
+square, a raised hand the saw. The stereo pan is the same trick on x, and each
+voice puts out a left and a right signal that the main patch sums per channel.
+The video is mirrored, so a hand on your left sounds on the left; with
+`--no-mirror` it would be the other way round. The first version faded each voice in dB, which is silent at the
+far ends but puts both at −30 dB in the middle: a hole where the mix should be.
+Every control path ends in `pack f 80` → `line~`: the camera delivers about 30
+values a second, and an 80 ms ramp to each new one is what keeps steps out of
+the audio without adding noticeable lag. The four readouts go through
+`speedlim 500` inside the voice — see the section on screen updates above; the
+data path has no number box on it.
+
+The patch owns UDP 7500 itself, so it cannot be open at the same time as
+Pipeline A's `cv.receive.maxpat` (the CV repo's receiver); one or the other.
+`track-demo --swap-hands` if MediaPipe's left/right is the wrong way round for
+the camera in use — the pitch tells you at once.
+
+**Which camera pipeline this listens to, and the state of the other one.**
+This patch speaks the wire format of the `mediapipe-osc` branch of the
+tuning-attention CV repo (port 7500, per-hand `pinch` scalar, named points).
+That is the sender that exists and has been run against a real camera and real
+Max. The `cv.receive.maxpat` / `cv.channel.maxpat` pair *in this folder* (port
+7401, `/cv/hand hand side landmark …`, described in the next section) was
+written for a `hand-demo` / `pose-demo` sender that was never committed
+anywhere, so as of 2026-09-09 nothing can drive it. Treat the next section as
+a design that lost, pending either deleting it or rewriting it against 7500.
 
 ## Pose and hand from the laptop camera (attention-cv), on a separate port
 
