@@ -79,6 +79,7 @@ Max loads depends on where the open patch is saved.
 | `cv.channel.maxpat` | one tap: a landmark dropdown (pose + both hands) and its outlets |
 | `cv-pinch-synth.maxpat` | two-hand demo: pinch → lowpass, hand height → square/saw blend, hand left/right → stereo pan, right hand a fifth up. Listens on 7500 itself. |
 | `cv-pinch-voice.maxpat` | one voice of the above; argument is the pitch ratio. Used twice by `cv-pinch-synth`. |
+| `cv-smooth.maxpat` | `pack f #1` → `line~`: the one smoothing object, used six times inside the voice. |
 
 **Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
 at a time.** The monitor is for answering "is the phone sending this at all";
@@ -344,20 +345,39 @@ the right hand the same voice a fifth up (× 1.5). For either hand:
 | leaves the frame | fades out over 300 ms | `/cv/hand/<side>/present` → `change` → `line~` → `*~` |
 | moves left ↔ right in the frame | pans left ↔ right in the stereo field, equal-power | `/cv/hand/<side>/wrist` x (0–1, 0 at the left of the mirrored view) → `expr cos/sin($f1*π/2)` → `line~` → `*~` on each channel |
 
-Two files: `cv-pinch-synth.maxpat` is the one to open — it holds the socket,
-the six-address `route`, the shared controls (base Hz, the two pinch
-calibration distances, resonance) and two copies of the voice. The voice
-itself is `cv-pinch-voice.maxpat`, an abstraction whose one argument is the
+Three files. `cv-pinch-synth.maxpat` is the one to open. Its patching view is
+four colour panels read top to bottom — **IN** (the socket and one `route`
+per hand), **SHARED** (base Hz, the two pinch calibration distances,
+resonance, packed into one list), **VOICES** (two copies of the voice and
+their readouts), **OUT** (sum, trim, `ezdac~`). ⌘⌥E flips to a presentation
+view holding only what a player touches: the four shared boxes, the four
+readouts and the audio switch.
+
+`cv-pinch-voice.maxpat` is the voice, an abstraction whose one argument is the
 pitch ratio (`cv-pinch-voice 1.` and `cv-pinch-voice 1.5` — **with the dot**, or
-`* #1` multiplies as an integer and 110. becomes 110 and 1.5 becomes 1). It
-must stay in this folder next to the main patch, same rule as the `.js` files.
-If you edit the voice, keep its inlets and outlets where they are left to
-right: **Max numbers an abstraction's inlets by x position, not by when they
-were made**, and moving one re-plugs every cord in the main patch silently —
-the first version of this patch was inaudible for exactly that reason, with
-110 Hz going into the wrist unpack and 0.02 into the presence gate.
-No `js`, no receiver bpatcher: the six addresses are fixed and known, so a
-plain `route` is enough.
+`* #1` multiplies as an integer and 1.5 becomes 1). Inside, the blue column on
+the left is the signal path, oscillators at the top and the two outlets at the
+bottom, and the panels to its right are the four control chains that feed it:
+pinch → cutoff, height → blend, present → gate, left–right → pan. Every cord
+runs downward or leftward into the signal column.
+
+`cv-smooth.maxpat` is `pack f #1` → `line~`: one ramp per new value, `#1` ms
+long. It is used six times in the voice so that "the smoothing" is one object
+to point at, and one place to change the ramp. All three must stay in this
+folder, same rule as the `.js` files. No `js` and no receiver bpatcher: the six
+addresses are fixed and known, so plain `route`s are enough.
+
+Two Max facts shaped this layout, both learned by the patch going silent:
+
+- **Max numbers an abstraction's inlets and outlets by x position**, not by
+  creation order. Moving one re-plugs every cord in the parent silently. The
+  voice's inlets are params · pinch · wrist · present, left to right; keep them
+  there.
+- **`#1` is not substituted inside a symbol.** `route /cv/hand/#1/pinch`
+  matches nothing (checked on Max 8.5 with a probe patch, 2026-09-09), while
+  `route #1` with a whole-address argument works. That is why the per-hand
+  `route` lives in the main patch and the voice takes pinch, wrist and present
+  on three separate inlets instead of the raw stream and a side name.
 
 Two things to know before wondering why it does not sound right:
 
