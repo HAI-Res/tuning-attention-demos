@@ -78,8 +78,6 @@ Max loads depends on where the open patch is saved.
 | `cv.receive.maxpat` | receives attention-cv's pose/hand landmarks on UDP 7401, fans them out. Exactly one. |
 | `cv.channel.maxpat` | one tap: a landmark dropdown (pose + both hands) and its outlets |
 | `cv-pinch-synth.maxpat` | two-hand demo: pinch → lowpass, hand height → square/saw blend, hand left/right → stereo pan, right hand a fifth up. Listens on 7500 itself. |
-| `cv-pinch-voice.maxpat` | one voice of the above; argument is the pitch ratio. Used twice by `cv-pinch-synth`. |
-| `cv-smooth.maxpat` | `pack f #1` → `line~`: the one smoothing object, used six times inside the voice. |
 
 **Both patches contain a receiver, and a receiver owns UDP 7400 — so open one
 at a time.** The monitor is for answering "is the phone sending this at all";
@@ -345,39 +343,26 @@ the right hand the same voice a fifth up (× 1.5). For either hand:
 | leaves the frame | fades out over 300 ms | `/cv/hand/<side>/present` → `change` → `line~` → `*~` |
 | moves left ↔ right in the frame | pans left ↔ right in the stereo field, equal-power | `/cv/hand/<side>/wrist` x (0–1, 0 at the left of the mirrored view) → `expr cos/sin($f1*π/2)` → `line~` → `*~` on each channel |
 
-Three files. `cv-pinch-synth.maxpat` is the one to open. Its patching view is
-four colour panels read top to bottom — **IN** (the socket and one `route`
-per hand), **SHARED** (base Hz, the two pinch calibration distances,
-resonance, packed into one list), **VOICES** (two copies of the voice and
-their readouts), **OUT** (sum, trim, `ezdac~`). ⌘⌥E flips to a presentation
-view holding only what a player touches: the four shared boxes, the four
-readouts and the audio switch.
+One flat file, no abstractions, laid out as a grid so it can be read aloud.
+**Rows are the stages of the chain, columns are the two hands**, and the
+labels down the left margin name the rows: INPUTS, OSCILLATORS, FILTER, GATE,
+PAN, OUT. Within a column the signal runs straight down the left edge —
+`rect~`/`saw~` → `*~` → `+~` → `lores~` → `*~` (gate) → `*~` `*~` (pan) — and
+each control chain sits to the right of the stage it drives, feeding leftward
+into a right-hand inlet: the height exprs beside the oscillators, the pinch
+chain beside the filter, the presence ramp beside the gate, the x exprs beside
+the pan. A SHARED row at the top holds the four hand-set values (base Hz, the
+two pinch calibration distances, resonance) with cords down into both columns.
+The two columns are identical apart from `* 1.` versus `* 1.5` on the pitch
+and `left` versus `right` in the `route`. Six addresses, all fixed, so a plain
+`route` per hand does the splitting — no `js`, no receiver bpatcher.
 
-`cv-pinch-voice.maxpat` is the voice, an abstraction whose one argument is the
-pitch ratio (`cv-pinch-voice 1.` and `cv-pinch-voice 1.5` — **with the dot**, or
-`* #1` multiplies as an integer and 1.5 becomes 1). Inside, the blue column on
-the left is the signal path, oscillators at the top and the two outlets at the
-bottom, and the panels to its right are the four control chains that feed it:
-pinch → cutoff, height → blend, present → gate, left–right → pan. Every cord
-runs downward or leftward into the signal column.
-
-`cv-smooth.maxpat` is `pack f #1` → `line~`: one ramp per new value, `#1` ms
-long. It is used six times in the voice so that "the smoothing" is one object
-to point at, and one place to change the ramp. All three must stay in this
-folder, same rule as the `.js` files. No `js` and no receiver bpatcher: the six
-addresses are fixed and known, so plain `route`s are enough.
-
-Two Max facts shaped this layout, both learned by the patch going silent:
-
-- **Max numbers an abstraction's inlets and outlets by x position**, not by
-  creation order. Moving one re-plugs every cord in the parent silently. The
-  voice's inlets are params · pinch · wrist · present, left to right; keep them
-  there.
-- **`#1` is not substituted inside a symbol.** `route /cv/hand/#1/pinch`
-  matches nothing (checked on Max 8.5 with a probe patch, 2026-09-09), while
-  `route #1` with a whole-address argument works. That is why the per-hand
-  `route` lives in the main patch and the voice takes pinch, wrist and present
-  on three separate inlets instead of the raw stream and a side name.
+An earlier version put the voice in an abstraction with a colour-panelled
+layout and a presentation view. It was harder to step through, not easier,
+and was dropped. Two Max facts from that detour are worth keeping anyway:
+Max numbers an abstraction's inlets by x position, not creation order; and
+`#1` is not substituted inside a symbol (`route /cv/hand/#1/pinch` matches
+nothing on Max 8.5, while `route #1` with a whole address works).
 
 Two things to know before wondering why it does not sound right:
 
@@ -405,7 +390,7 @@ far ends but puts both at −30 dB in the middle: a hole where the mix should be
 Every control path ends in `pack f 80` → `line~`: the camera delivers about 30
 values a second, and an 80 ms ramp to each new one is what keeps steps out of
 the audio without adding noticeable lag. The four readouts go through
-`speedlim 500` inside the voice — see the section on screen updates above; the
+`speedlim 500` — see the section on screen updates above; the
 data path has no number box on it.
 
 The patch owns UDP 7500 itself, so it cannot be open at the same time as
