@@ -65,7 +65,7 @@ scan again: the app sends OSC straight to Max over the LAN, at 100 Hz, and
 reaches AirPods head motion, which no browser can. The first packet triggers
 an iOS *Local Network* prompt; nothing arrives until you allow it.
 
-**Then try `3. gyro_buffer.1.maxpat`**: turn the phone and a sample scrubs
+**Then try `phone-gyroscope-demo.maxpat`**: turn the phone and a sample scrubs
 and pitches with it. That is the quickest way to confirm the phone is really
 connected. It wants a `tudor.wav` in `patches/max/` — drop in any `.wav` under
 that name, it is deliberately not committed.

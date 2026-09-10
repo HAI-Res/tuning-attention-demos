@@ -34,7 +34,7 @@ No phone handy? `python3 patches/max/poke.py` fakes one so you can check the
 patch itself works.
 
 **Only one patch with a receiver can be open at a time** (`attention-phone.maxpat`,
-`attention-phone-monitor.maxpat`, `3. gyro_buffer.1.maxpat` each embed one,
+`attention-phone-monitor.maxpat`, `phone-gyroscope-demo.maxpat` each embed one,
 and all three fight over UDP 7400).
 
 ## Files
@@ -47,7 +47,7 @@ and all three fight over UDP 7400).
 | `ap.qr.maxpat` | the QR code, paste one into any patch |
 | `ap.channel.maxpat` | a tap: channel dropdown + outlets |
 | `poke.py` | fakes a phone for testing without one |
-| `3. gyro_buffer.1.maxpat` | class demo — see below |
+| `phone-gyroscope-demo.maxpat` | class demo — see below |
 | `attention-cv.maxpat` | camera starter patch: receiver, three taps, one worked example |
 | `cv.receive.maxpat` | the camera receiver — socket on UDP 7500, throughput, channel list |
 | `cv.point.maxpat` | a camera tap: channel dropdown + outlets |
@@ -63,7 +63,7 @@ Copy an `ap.channel` bpatcher, lock the patch (⌘E), pick a channel from its
 dropdown. Outlets: whole reading · axis 1–4 · magnitude. `[ap.channel ap.gyro]`
 typed directly also works, no dropdown needed.
 
-## Class demo: `3. gyro_buffer.1.maxpat`
+## Class demo: `phone-gyroscope-demo.maxpat`
 
 Gyro rotation rate drives `groove~` playback speed through a resonant filter
 — turning the phone scrubs/pitches the sample. Needs a file named

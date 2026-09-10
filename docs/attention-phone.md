@@ -16,7 +16,7 @@ needed, the phone talks to Max directly. Needs the native **Ductus** app on
 the phone (see [`ios/README.md`](ios/README.md)). Full walkthrough:
 [`patches/max/README.md`](patches/max/README.md).
 
-**Then try `3. gyro_buffer.1.maxpat`** — turn the phone and you should hear a
+**Then try `phone-gyroscope-demo.maxpat`** — turn the phone and you should hear a
 sample scrub/pitch with it. That's the quickest way to confirm the phone is
 actually connected, rather than just watching numbers move. (Needs a
 `tudor.wav` in `patches/max/` — see the Max README.)
