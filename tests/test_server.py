@@ -252,3 +252,67 @@ async def test_app_page_explains_itself_through_a_tunnel():
         assert "tunnel" in body
     finally:
         await c.close()
+
+
+async def test_feed_relays_a_rooms_samples_with_labels():
+    # The hosted receiver's last hop: a phone that joined a room is relayed to
+    # whoever opened /feed for that room, as one labelled message per sample,
+    # and a phone in no room (or another room) is not.
+    import asyncio
+
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        async with c.ws_connect("/feed?room=k7f2q") as feed, c.ws_connect("/ws") as phone, \
+                c.ws_connect("/ws") as other:
+            await phone.send_str(json.dumps({"hello": {"d": "p1", "n": "Ada", "room": "k7f2q"}}))
+            await other.send_str(json.dumps({"hello": {"d": "p2", "n": "Bo"}}))
+            await asyncio.sleep(0.05)
+            await other.send_str(json.dumps({"d": "p2", "q": 1, "t": 0.1, "s": {"accel": [9, 9, 9]}}))
+            await phone.send_str(json.dumps(
+                {"d": "p1", "q": 1, "t": 0.5, "s": {"accel": [0.0, 0.0, 1.0], "bogus": "x", "gyro": [1, 2]}}
+            ))
+            msg = json.loads((await asyncio.wait_for(feed.receive(), timeout=2.0)).data)
+        assert msg == {"d": "p1", "n": "Ada", "t": 0.5, "s": {"accel": [0.0, 0.0, 1.0]}}
+        assert hub.rooms() == {}   # the relay left, so the room has no listeners
+        assert (await (await c.get("/health")).json())["rooms"] == {}
+    finally:
+        await c.close()
+
+
+async def test_feed_without_a_room_is_refused():
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        resp = await c.get("/feed")
+        assert resp.status == 400
+    finally:
+        await c.close()
+
+
+async def test_feed_heartbeats_when_the_room_is_quiet():
+    import asyncio
+
+    from attention_phone import server as srv
+
+    original = srv.HEARTBEAT_INTERVAL
+    srv.HEARTBEAT_INTERVAL = 0.05
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        async with c.ws_connect("/feed?room=empty") as feed:
+            msg = json.loads((await asyncio.wait_for(feed.receive(), timeout=2.0)).data)
+        assert "ok" in msg
+    finally:
+        srv.HEARTBEAT_INTERVAL = original
+        await c.close()
+
+
+async def test_app_page_trusts_the_proxys_protocol_header():
+    hub = SensorHub()
+    c = await client_for(hub)
+    try:
+        body = await (await c.get("/app", headers={"Host": "10.0.0.7:443", "X-Forwarded-Proto": "https"})).text()
+        assert "tls=1" in body
+    finally:
+        await c.close()

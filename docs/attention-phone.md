@@ -21,16 +21,19 @@ sample scrub/pitch with it. That's the quickest way to confirm the phone is
 actually connected, rather than just watching numbers move. (Needs a
 `tudor.wav` in `patches/max/` — see the Max README.)
 
-## Two ways in
+## Three ways in
 
-- **Max** — vanilla Max 8 patches, phone talks to it directly. See
-  [`patches/max/README.md`](patches/max/README.md).
-- **Native iOS app** (*Ductus*) — also reaches AirPods head orientation and
-  mic onset detection, at 100 Hz. See [`ios/README.md`](ios/README.md).
+- **The web page** — the QR in the patch, by default. Any phone's browser,
+  through the class server at `ductus-web-app.csail.mit.edu`, keyed to your
+  laptop by a room code; the receiver's `relay.js` pulls it back into Max.
+  Eight of the app's seventeen channels, including the microphone. How and
+  why it is hosted: [`hosting.md`](hosting.md).
+- **Native iOS app** (*Ductus*) — OSC straight to Max over the LAN at 100 Hz;
+  also reaches AirPods head orientation. Menu under the QR.
+- **A page served from your own laptop** — `uv run phone-demo --osc
+  127.0.0.1:7400`, for a LAN with no internet. Third item in the same menu.
 
-(There's also a browser-based sender path via `uv run phone-demo` — not
-verified working right now, so use the app + Max path above instead until
-that's sorted out.)
+The Max side is the same for all three: [`attention-phone-max.md`](attention-phone-max.md).
 
 ## Sending elsewhere
 

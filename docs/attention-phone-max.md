@@ -72,7 +72,10 @@ Max loads depends on where the open patch is saved.
 | `ap.qr.maxpat` | the address as a scannable code. As many as you like. |
 | `ap.channel.maxpat` | one tap: a channel dropdown and its outlets |
 | `attention-phone.js` | splits the OSC address; the reason is below |
-| `address.js` | this Mac's address and the QR, via Node for Max |
+| `address.js` | this Mac's address and the three QR targets, via Node for Max |
+| `relay.js` | pulls this laptop's room from the class server into the receiver; owns the room key |
+| `wsclient.js` | a WebSocket client on Node's standard library alone, so nothing is fetched |
+| `server-config.js` | the class server's address — the one line to change |
 | `qr.js` | draws the QR — no install, see below |
 | `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
 | `poke.py` | drives every channel so the patch works with no phone |
@@ -88,10 +91,18 @@ the starter is for doing something with it.
 
 ## Pointing the phone at it
 
-**Point the phone's camera at the QR in the receiver block.** It sets host, port
-and transport in one tap, and redraws itself if the address or port changes, so
-it cannot go stale. The same link is printed as text beside it, to read out or
-type if a camera is not to hand:
+**Point the phone's camera at the QR.** By default it opens the hosted web
+page with this laptop's room key, so the phone's data lands in this Max with
+nothing installed on either side. The same link is printed as text beside it,
+to read out or type if a camera is not to hand:
+
+```
+https://ductus-web-app.csail.mit.edu/?room=k7f2q
+```
+
+Switch the menu to *Ductus app* for the native app's link instead, which sets
+host, port and transport in one tap and redraws itself if the address or port
+changes:
 
 ```
 ductus://configure?host=128.30.9.64&osc=7400&mode=osc
@@ -101,10 +112,44 @@ ductus://configure?host=128.30.9.64&osc=7400&mode=osc
 alive, which is what you want if you would like the terminal readout at the
 same time. Keys left out of the link are left alone.
 
-Two things to expect on a first run. iOS raises its **Local Network** permission
-prompt on the first packet, and until it is answered nothing arrives. And
-reinstalling the app from Xcode can reset its `UserDefaults`, which lands it on
-`mode=websocket` with a blank host — so re-open the link after a rebuild.
+**The menu under the code chooses which sender it is for.** Three ways into
+the same receiver; a patch cannot tell them apart.
+
+| menu | the code encodes | how it reaches this Max |
+| --- | --- | --- |
+| *Web page — server* (default) | `https://ductus-web-app.csail.mit.edu/?room=<key>` | the phone sends to the server; `relay.js` in this receiver pulls the room back |
+| *Ductus app* | `ductus://configure?host=…&osc=7400&mode=osc` | OSC over the LAN, straight to `udpreceive` |
+| *Web page — this laptop* | `https://<dashed-ip>.local-ip.sh:8443/` | a `phone-demo --osc 127.0.0.1:7400` running on this laptop |
+
+The web page is a copy of the app's screen minus AirPods and the channels a
+browser cannot reach (eight of seventeen), and it speaks the same wire format.
+
+**The server path is the one for a room of laptops.** Every student's Max
+shows a code with its own **room key** — five letters, made once by `relay.js`
+and kept in `~/.attention-phone/room` — and the phone that scans it lands in
+that laptop's room and nowhere else. The receiver shows the key and the
+relay's status under the phone menu. Nothing to install and no address to type
+on either end: the phone only needs the internet, and the laptop only makes an
+outbound connection. The exposure is that anyone who can see your screen can
+join or tap your room; a LAN has the same one. `room new` to the `node.script`
+makes a fresh key, `bang` retries a connection the relay gave up on. The server
+address is one line in `server-config.js`.
+
+**The local path needs `phone-demo` first.** A browser cannot send UDP, so
+before showing that code start
+
+```sh
+uv run phone-demo --osc 127.0.0.1:7400
+```
+
+Nothing in Max can tell whether it is running — a UDP socket has no way to ask
+— so if the code is up and nothing arrives, that is the first thing to check.
+Send `webport <n>` to the `node.script` in `ap.qr` if `phone-demo` is not on
+8443.
+
+`attention-phone-monitor.maxpat` has its own `udpreceive` and no relay, so it
+shows the app and the local page but not the server path; use `ap.receive`
+(the starter patch) for that.
 
 ## Or from `phone-demo`
 

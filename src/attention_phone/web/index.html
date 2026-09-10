@@ -4,275 +4,717 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>attention-phone</title>
+<meta name="color-scheme" content="light dark">
+<title>Ductus</title>
 <style>
+  /*
+   * The browser edition of the Ductus iOS app: same screen, same sections,
+   * same words, so a person can be handed either and not notice.
+   *
+   * There are no animations or transitions anywhere in this file, and none
+   * may be added. The native app's only animation — the status light's pulse —
+   * is deliberately left out here. Motion on a page that is being read while
+   * the reader moves is a vestibular trigger; the app's rule that nothing
+   * flickers extends to nothing sliding, fading or pulsing either. The only
+   * moving thing on this page is the browser's own switch control, which is
+   * the platform's, not ours.
+   */
   :root {
-    color-scheme: dark;
-    --bg: #14161a; --fg: #e8e6e1; --dim: #8b8f96;
-    --line: #2a2e35; --ok: #7fc8a9; --warn: #e0b674; --bad: #d98b8b;
+    color-scheme: light dark;
+    --bg: #f2f2f7; --card: #ffffff; --fg: #1c1c1e; --dim: #6e6e73; --dim2: #8e8e93;
+    --line: #e3e3e8; --accent: #0a84ff; --accent-fg: #fff;
+    --green: #34c759; --yellow: #d9a400; --orange: #ff9500; --red: #ff3b30;
+    --bar-bg: rgba(242, 242, 247, .94);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000; --card: #1c1c1e; --fg: #f2f2f7; --dim: #9a9aa0; --dim2: #77777d;
+      --line: #2c2c2e; --accent: #0a84ff;
+      --green: #30d158; --yellow: #ffd60a; --orange: #ff9f0a; --red: #ff453a;
+      --bar-bg: rgba(0, 0, 0, .92);
+    }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--fg); }
   body {
-    margin: 0; padding: env(safe-area-inset-top) 18px 24px;
-    background: var(--bg); color: var(--fg);
-    font: 15px/1.45 ui-sans-serif, -apple-system, system-ui, sans-serif;
+    margin: 0;
+    padding: env(safe-area-inset-top) 16px 0;
+    font: 17px/1.35 -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
     /* No scroll-bounce: the page is a fixed instrument panel, and rubber
        banding while shaking the phone is disorienting. */
     overscroll-behavior: none; touch-action: manipulation;
   }
-  h1 { font-size: 15px; font-weight: 600; letter-spacing: .06em;
-       text-transform: uppercase; color: var(--dim); margin: 20px 0 14px; }
-  #name {
-    width: 100%; padding: 13px 14px; margin-bottom: 12px;
-    background: #1b1e24; color: var(--fg); border: 1px solid var(--line);
-    border-radius: 10px; font: inherit; font-size: 17px; /* 17px: iOS zooms in on smaller */
+  header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 12px 4px 8px;
   }
-  button {
-    width: 100%; padding: 20px; border: 0; border-radius: 12px;
-    background: var(--fg); color: #14161a; font: inherit; font-size: 19px;
-    font-weight: 600; letter-spacing: .01em;
+  header h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  header button {
+    background: none; border: 0; color: var(--accent); font: inherit; font-size: 17px;
+    padding: 8px 4px; margin-bottom: 2px;
   }
-  button:disabled { background: #33383f; color: var(--dim); }
-  button.stop { background: #3a2e2e; color: var(--fg); }
-  #status { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px;
-            background: #1b1e24; border-left: 3px solid var(--dim);
-            color: var(--dim); font-size: 14px; min-height: 44px; }
-  #status.ok   { border-color: var(--ok);   color: var(--ok); }
-  #status.warn { border-color: var(--warn); color: var(--warn); }
-  #status.bad  { border-color: var(--bad);  color: var(--bad); }
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  td { padding: 7px 0; border-bottom: 1px solid var(--line); }
-  td.k { color: var(--dim); width: 5.5em; }
-  td.v { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-         font-size: 14px; letter-spacing: -.02em; }
-  /* The bar is the part you can read while moving — numbers blur, a bar
-     does not. Centre-anchored because acceleration is signed. */
-  .bar { position: relative; height: 6px; background: #22262c; border-radius: 3px; margin-top: 5px; }
-  .bar i { position: absolute; top: 0; bottom: 0; background: var(--ok); border-radius: 3px; }
-  .bar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px;
-                width: 1px; background: var(--line); }
-  #rate { font-family: ui-monospace, Menlo, monospace; color: var(--dim); font-size: 13px; margin-top: 10px; }
-  .hide { display: none; }
-  a { color: var(--dim); }
+  header button:disabled { color: var(--dim2); }
+  main { padding-bottom: 140px; }
+
+  /* Sections mirror a grouped list: a small caps header, then a card. */
+  section { margin: 0 0 24px; }
+  section > h2 {
+    margin: 0 0 6px; padding: 0 16px;
+    font-size: 13px; font-weight: 400; color: var(--dim); text-transform: uppercase; letter-spacing: .02em;
+  }
+  section > p.foot { margin: 6px 0 0; padding: 0 16px; font-size: 13px; color: var(--dim); }
+  .card { background: var(--card); border-radius: 12px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; min-height: 48px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .grow { flex: 1; min-width: 0; }
+  .row .title { font-size: 17px; }
+  .row .sub { font-size: 12px; color: var(--dim); margin-top: 1px; }
+  .row .right { color: var(--dim); font-size: 15px; text-align: right; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  /* Connection */
+  .light { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--dim2); }
+  .light.stopped { background: var(--dim2); }
+  .light.connecting { background: var(--orange); }
+  .light.sending { background: var(--green); }
+  .light.intermittent, .light.noData { background: var(--yellow); }
+  .light.down { background: var(--red); }
+  .headline { font-weight: 600; font-size: 17px; }
+  .caption { font-size: 12px; color: var(--dim); margin-top: 2px; overflow-wrap: anywhere; }
+  .error { color: var(--orange); font-size: 15px; }
+
+  /* Channel rows */
+  .ch { flex-direction: column; align-items: stretch; gap: 4px; }
+  .ch .line { display: flex; align-items: center; gap: 12px; }
+  .hz { display: flex; align-items: center; gap: 5px; color: var(--dim); font-size: 12px; white-space: nowrap; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .dot.idle { background: var(--dim2); opacity: .5; }
+  .vals { display: flex; gap: 10px; padding-left: 2px; }
+  .vals div { display: flex; flex-direction: column; }
+  .vals .ax { font-size: 9px; color: var(--dim2); }
+  .vals .v { font-size: 13px; }
+  .reason { font-size: 12px; color: var(--orange); }
+
+  /* The switch is the platform's own. Safari 17.4+ draws a real toggle for
+     `switch`; anything older gets its plain checkbox, which is also native. */
+  input[type=checkbox] { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--green); }
+  input[type=checkbox][switch] { width: 51px; height: 31px; }
+
+  /* Bottom bar, fixed like the app's safeAreaInset */
+  #bottom {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+    background: var(--bar-bg); border-top: 1px solid var(--line);
+  }
+  #bottom .note { text-align: center; font-size: 12px; color: var(--dim); margin: 0 0 8px; }
+  #go {
+    display: block; width: 100%; padding: 15px; border: 0; border-radius: 12px;
+    background: var(--accent); color: var(--accent-fg); font: inherit; font-size: 17px; font-weight: 600;
+  }
+  #go.stop { background: var(--red); }
+  #go:disabled { opacity: .5; }
+
+  /* Settings: a full-screen panel, shown and hidden instantly. A sheet that
+     slides up is exactly the kind of motion this page does without. */
+  #settings { position: fixed; inset: 0; background: var(--bg); overflow-y: auto; padding: env(safe-area-inset-top) 16px 40px; z-index: 10; }
+  #settings header h1 { font-size: 17px; font-weight: 600; margin: 0 auto; }
+  #settings header { justify-content: center; position: relative; padding: 18px 0 10px; }
+  #settings header button { position: absolute; right: 0; bottom: 4px; font-weight: 600; }
+  input[type=text] {
+    flex: 1; min-width: 0; border: 0; background: none; color: var(--fg); font: inherit;
+    text-align: right; padding: 0; outline: none;
+  }
+  input[type=text]::placeholder { color: var(--dim2); }
+  .seg { display: flex; background: var(--line); border-radius: 9px; padding: 2px; }
+  .seg button { flex: 1; border: 0; background: none; color: var(--fg); font: inherit; font-size: 13px; padding: 6px 0; border-radius: 7px; }
+  .seg button[aria-pressed=true] { background: var(--card); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  a { color: var(--accent); text-decoration: none; }
+  a.linkrow { display: flex; color: var(--fg); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 
-<h1>attention&#8209;phone</h1>
+<header>
+  <h1>Ductus</h1>
+  <button id="open-settings" aria-label="Settings" title="Settings">Settings</button>
+</header>
 
-<input id="name" placeholder="your name" autocomplete="off"
-       autocapitalize="words" spellcheck="false">
-<button id="go">Start sending</button>
-<div id="status">Type a name, then tap Start. iOS will ask for permission to use motion &amp; orientation &mdash; say yes.</div>
+<main>
+  <section id="connection">
+    <h2 id="who">&nbsp;</h2>
+    <div class="card">
+      <div class="row">
+        <div class="light stopped" id="light"></div>
+        <div class="grow">
+          <div class="headline" id="link-label">Stopped</div>
+          <div class="caption" id="link-sub">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<div id="panel" class="hide">
-  <table>
-    <tr><td class="k">accel</td><td class="v" id="v-accel">&mdash;</td></tr>
-    <tr><td colspan="2"><div class="bar"><i id="b-accel"></i></div></td></tr>
-    <tr><td class="k">gyro</td><td class="v" id="v-gyro">&mdash;</td></tr>
-    <tr><td colspan="2"><div class="bar"><i id="b-gyro"></i></div></td></tr>
-    <tr><td class="k">attitude</td><td class="v" id="v-attitude">&mdash;</td></tr>
-    <tr><td class="k">heading</td><td class="v" id="v-heading">&mdash;</td></tr>
-  </table>
-  <div id="rate">&mdash;</div>
+  <section id="error-section" hidden>
+    <div class="card"><div class="row"><div class="error" id="error">&nbsp;</div></div></div>
+  </section>
+
+  <div id="groups"></div>
+
+  <section id="missing-section">
+    <h2>Not available here</h2>
+    <div class="card" id="missing"></div>
+  </section>
+</main>
+
+<div id="bottom">
+  <p class="note" id="keep-open" hidden>Keep this screen open — the browser stops motion events in the background</p>
+  <button id="go">Start sending</button>
+</div>
+
+<div id="settings" hidden>
+  <header>
+    <h1>Settings</h1>
+    <button id="close-settings">Done</button>
+  </header>
+
+  <section>
+    <h2>You</h2>
+    <div class="card">
+      <label class="row"><span class="grow">Your name</span>
+        <input type="text" id="name" placeholder="Your name" autocomplete="off" autocapitalize="words" spellcheck="false"></label>
+      <div class="row"><span class="grow">Device id</span><span class="right mono" id="device-id"></span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Laptop</h2>
+    <div class="card">
+      <div class="row"><span class="grow">Address</span><span class="right mono" id="laptop-host"></span></div>
+      <div class="row"><span class="grow">Send by</span><span class="right">WebSocket</span></div>
+      <label class="row"><span class="grow">Room</span>
+        <input type="text" id="room" placeholder="none — this laptop" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+      <label class="row"><span class="grow">Start when opened</span><input type="checkbox" switch id="autostart"></label>
+    </div>
+    <p class="foot" id="laptop-foot"></p>
+  </section>
+
+  <section>
+    <h2>Ductus app</h2>
+    <div class="card">
+      <a class="row linkrow" id="app-link" href="/app"><span class="grow">Have the iOS app? Configure it from here</span><span class="right">&rsaquo;</span></a>
+    </div>
+    <p class="foot">The native app reaches two things a browser cannot: AirPods head orientation and a 100 Hz sensor rate. Everything else on this page is the same instrument.</p>
+  </section>
+
+  <section>
+    <div class="card">
+      <label class="row"><span class="grow">Show live values</span><input type="checkbox" switch id="show-values"></label>
+    </div>
+    <p class="foot">Per-axis numbers under each sensor. Useful once, to check units — a phone at rest should read accel ≈ 0 and gravity ≈ 9.81.</p>
+  </section>
+
+  <section>
+    <h2>Rate cap</h2>
+    <div class="card"><div class="row"><div class="seg grow" id="rate-seg">
+      <button data-rate="10">10 Hz</button><button data-rate="25">25 Hz</button>
+      <button data-rate="50">50 Hz</button><button data-rate="0">Full</button>
+    </div></div></div>
+    <p class="foot">A cap, not a request. The browser decides how fast it delivers motion — about 60 Hz on iOS — and this only thins what is sent. The number beside each sensor is what is actually going out.</p>
+  </section>
+
+  <section>
+    <h2>Set up by link</h2>
+    <p class="foot">This page takes the same kind of configure link the app does, as query parameters: <code>?room=k7f2q&amp;name=Ada&amp;on=accel,gyro,audio&amp;autostart=1&amp;rate=50&amp;values=1</code>. Keys left out are left alone.</p>
+  </section>
 </div>
 
 <script>
 (() => {
   "use strict";
-  const D2R = Math.PI / 180;
   const $ = (id) => document.getElementById(id);
-  const nameBox = $("name"), goBtn = $("go"), statusEl = $("status"), panel = $("panel");
+  const D2R = Math.PI / 180;
 
-  // A device id that survives reloads, so reconnecting keeps the same row on
-  // the laptop instead of appearing as a new phone.
-  let deviceId;
-  try {
-    deviceId = localStorage.getItem("ap-device");
-    if (!deviceId) localStorage.setItem("ap-device", deviceId = "ph-" + Math.random().toString(36).slice(2, 8));
-    nameBox.value = localStorage.getItem("ap-name") || "";
-  } catch { deviceId = "ph-" + Math.random().toString(36).slice(2, 8); }
+  // ---- the channel table, the same one the app has ------------------------
+  // `web` says how this page gets it. Anything without a `web` source is
+  // listed under "Not available here" with the reason, exactly as the app does
+  // for hardware it cannot see.
+  const CHANNELS = [
+    { name: "accel",     label: "Acceleration",         unit: "m/s²",       axes: ["x","y","z"],           group: "Device motion (fused)", web: "motion" },
+    { name: "gravity",   label: "Gravity",              unit: "m/s²",       axes: ["x","y","z"],           group: "Device motion (fused)", web: "motion" },
+    { name: "gyro",      label: "Rotation rate",        unit: "rad/s",      axes: ["x","y","z"],           group: "Device motion (fused)", web: "motion" },
+    { name: "attitude",  label: "Attitude",             unit: "deg",        axes: ["yaw","pitch","roll"],  group: "Device motion (fused)", web: "motion" },
+    { name: "quat",      label: "Quaternion",           unit: "",           axes: ["w","x","y","z"],       group: "Device motion (fused)", why: "The browser exposes attitude as three angles only" },
+    { name: "mag",       label: "Magnetic field",       unit: "µT",         axes: ["x","y","z"],           group: "Device motion (fused)", why: "No magnetometer in the web API" },
+    { name: "accelg",    label: "Accelerometer (raw)",  unit: "m/s²",       axes: ["x","y","z"],           group: "Raw sensors",           web: "motion" },
+    { name: "gyroraw",   label: "Gyroscope (raw)",      unit: "rad/s",      axes: ["x","y","z"],           group: "Raw sensors",           why: "The browser delivers the fused rate only" },
+    { name: "magraw",    label: "Magnetometer (raw)",   unit: "µT",         axes: ["x","y","z"],           group: "Raw sensors",           why: "No magnetometer in the web API" },
+    { name: "pressure",  label: "Barometer",            unit: "kPa, m",     axes: ["kpa","altitude"],      group: "Environment",           why: "iOS gives no page access to the barometer" },
+    { name: "location",  label: "Location",             unit: "deg, m, m/s",axes: ["lat","lon","alt","speed"], group: "Environment",       web: "location" },
+    { name: "heading",   label: "Compass",              unit: "deg",        axes: ["deg"],                 group: "Environment",           web: "orientation" },
+    { name: "steps",     label: "Pedometer",            unit: "n, /s, m",   axes: ["count","cadence","distance"], group: "Environment",    why: "No pedometer in the web API" },
+    { name: "device",    label: "Device state",         unit: "",           axes: ["proximity","battery","orientation"], group: "Environment", why: "Proximity and battery are not exposed to iOS pages" },
+    { name: "head",      label: "AirPods attitude",     unit: "deg",        axes: ["yaw","pitch","roll"],  group: "AirPods",               why: "AirPods head tracking needs the Ductus app" },
+    { name: "headaccel", label: "AirPods acceleration", unit: "m/s²",       axes: ["x","y","z"],           group: "AirPods",               why: "AirPods head tracking needs the Ductus app" },
+    { name: "audio",     label: "Microphone",           unit: "0–1, dB rise", axes: ["rms","peak","onset"], group: "Audio",                web: "audio" },
+  ];
+  const BY_NAME = Object.fromEntries(CHANNELS.map((c) => [c.name, c]));
+  const AVAILABLE = CHANNELS.filter((c) => c.web);
 
-  const state = {
-    ws: null, running: false, seq: 0, sent: 0,
-    t0: 0, lastAttitude: null, heading: null, wakeLock: null,
-    stamps: [],           // recent send times, for the measured-rate readout
+  // ---- settings, persisted like the app's UserDefaults --------------------
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("ductus." + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("ductus." + k, JSON.stringify(v)); } catch {} },
+  };
+  const settings = {
+    name: store.get("name", ""),
+    enabled: new Set(store.get("enabled", ["accel", "gravity", "gyro", "attitude"])),
+    autostart: store.get("autostart", false),
+    showValues: store.get("showValues", false),
+    rateCap: store.get("rateCap", 0),          // 0 = whatever the browser gives
+    // Which laptop this phone belongs to, when the receiver is hosted centrally:
+    // the QR on a student's Max patch carries ?room=<key>, and that laptop's
+    // patch relays this room and nothing else. Empty means "the laptop that
+    // served this page", which is how it works on a LAN.
+    room: store.get("room", ""),
+    deviceID: store.get("deviceID", null),
+  };
+  if (!settings.deviceID) {
+    // Stable per-install id, so a reconnecting phone keeps its row on the
+    // laptop instead of appearing as a new device. "web-", to tell it apart
+    // from the app's "ios-" in the receiver.
+    settings.deviceID = "web-" + Math.random().toString(36).slice(2, 8);
+    store.set("deviceID", settings.deviceID);
+  }
+  const save = () => {
+    store.set("name", settings.name); store.set("enabled", [...settings.enabled]);
+    store.set("autostart", settings.autostart); store.set("showValues", settings.showValues);
+    store.set("rateCap", settings.rateCap); store.set("room", settings.room);
+  };
+  const displayName = () => settings.name.trim() || settings.deviceID;
+
+  // The web analogue of ductus://configure — the same keys where they make
+  // sense, so the QR in the Max patch can hand this page a name or a channel
+  // set. Only the keys present are touched.
+  (function applyQuery() {
+    const q = new URLSearchParams(location.search);
+    if (q.has("name")) settings.name = q.get("name").trim();
+    if (q.has("on")) settings.enabled = new Set(q.get("on").split(",").map((s) => s.trim()).filter((s) => BY_NAME[s]));
+    if (q.has("autostart")) settings.autostart = ["1", "true"].includes(q.get("autostart"));
+    if (q.has("values")) settings.showValues = ["1", "true"].includes(q.get("values"));
+    if (q.has("rate")) { const r = Number(q.get("rate")); if ([0, 10, 25, 50].includes(r)) settings.rateCap = r; }
+    if (q.has("room")) settings.room = q.get("room").trim();
+    if ([...q.keys()].length) { save(); history.replaceState(null, "", location.pathname); }
+  })();
+
+  // ---- state ----------------------------------------------------------------
+  const hub = {
+    running: false, ws: null, wsOpenedAt: 0, lastHeard: 0, reconnectTimer: null, attempt: 0,
+    sent: 0, lastSentTotal: 0, deliveredPerSecond: 0, deliveryHistory: [],
+    counts: {}, smoothedHz: {}, displayHz: {}, latest: {},
+    link: "stopped", lastError: null, unavailable: {},   // channel -> reason, learned at runtime (permission denied)
+    wakeLock: null, seq: 0, t0: 0, lastMotionSend: 0,
+    audio: null, geoWatch: null, orientation: null, heading: null,
+    displayTimer: null,
   };
 
-  const setStatus = (msg, cls = "") => { statusEl.textContent = msg; statusEl.className = cls; };
+  const LINK_LABEL = {
+    stopped: "Stopped", connecting: "Connecting…", sending: "Sending", intermittent: "Sending, with gaps",
+    noData: "Connected — no sensor data", down: "Not reaching the laptop",
+  };
 
-  // ---- permission ---------------------------------------------------------
+  // ---- rendering, at 1 Hz -----------------------------------------------------
+  // The screen is repainted once a second, and never from a sensor callback.
+  // Rapidly changing numerics are a migraine and vestibular trigger; the data
+  // still streams at full rate underneath. Do not raise this for "smoothness".
+  function buildChannels() {
+    const groups = [];
+    for (const c of AVAILABLE) if (!groups.includes(c.group)) groups.push(c.group);
+    const root = $("groups"); root.innerHTML = "";
+    for (const g of groups) {
+      const sec = document.createElement("section");
+      sec.innerHTML = `<h2>${g}</h2><div class="card"></div>`;
+      const card = sec.querySelector(".card");
+      for (const c of AVAILABLE.filter((x) => x.group === g)) {
+        const row = document.createElement("div");
+        row.className = "row ch"; row.id = "ch-" + c.name;
+        row.innerHTML = `
+          <div class="line">
+            <div class="grow"><div class="title">${c.label}</div>
+              <div class="sub">${c.unit ? `${c.name} · ${c.unit}` : c.name}</div></div>
+            <div class="hz" id="hz-${c.name}"></div>
+            <input type="checkbox" switch id="on-${c.name}" aria-label="${c.label}">
+          </div>
+          <div class="vals" id="vals-${c.name}" hidden></div>
+          <div class="reason" id="reason-${c.name}" hidden></div>`;
+        card.appendChild(row);
+        row.querySelector("input").onchange = (e) => setChannel(c.name, e.target.checked);
+      }
+      root.appendChild(sec);
+    }
+    const missing = $("missing"); missing.innerHTML = "";
+    for (const c of CHANNELS.filter((x) => !x.web)) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `<div class="grow"><div class="title" style="font-size:15px">${c.label}</div><div class="sub">${c.why}</div></div>`;
+      missing.appendChild(row);
+    }
+  }
+
+  function render() {
+    $("who").textContent = displayName();
+    $("light").className = "light " + hub.link;
+    $("link-label").textContent = LINK_LABEL[hub.link];
+    $("link-sub").textContent = subtitle();
+    $("error-section").hidden = !hub.lastError;
+    $("error").textContent = hub.lastError || "";
+
+    for (const c of AVAILABLE) {
+      const on = settings.enabled.has(c.name);
+      const box = $("on-" + c.name); if (box.checked !== on) box.checked = on;
+      const hz = hub.displayHz[c.name];
+      const hzEl = $("hz-" + c.name);
+      if (hz > 0) hzEl.innerHTML = `<span class="dot"></span><span class="mono">${hz} Hz</span>`;
+      else if (on && hub.running && !hub.unavailable[c.name]) hzEl.innerHTML = `<span class="dot idle"></span>`;
+      else hzEl.innerHTML = "";
+      const vals = $("vals-" + c.name), v = hub.latest[c.name];
+      if (settings.showValues && on && v) {
+        vals.hidden = false;
+        vals.innerHTML = c.axes.map((a, i) => `<div><span class="ax">${a}</span><span class="v mono">${fmt(v[i], c)}</span></div>`).join("");
+      } else { vals.hidden = true; }
+      const reason = hub.unavailable[c.name];
+      $("reason-" + c.name).hidden = !(reason && on);
+      $("reason-" + c.name).textContent = reason || "";
+    }
+    $("go").textContent = hub.running ? "Stop" : "Start sending";
+    $("go").className = hub.running ? "stop" : "";
+    $("keep-open").hidden = !hub.running;
+    $("open-settings").disabled = hub.running;
+  }
+  const fmt = (n, c) => c.name === "location" ? n.toFixed(5) : (n >= 0 ? "+" : "") + n.toFixed(2);
+
+  function subtitle() {
+    const host = settings.room ? `${location.host} · room ${settings.room}` : location.host;
+    switch (hub.link) {
+      case "stopped": case "connecting": return `${host} · WebSocket`;
+      case "noData": {
+        const on = AVAILABLE.filter((c) => settings.enabled.has(c.name));
+        if (!on.length) return "No sensors are switched on — turn one on below";
+        const names = on.map((c) => c.name).join(", ");
+        const blocked = on.map((c) => hub.unavailable[c.name]).find(Boolean);
+        return blocked ? `${names}: ${blocked}` : `${names} switched on, but producing nothing`;
+      }
+      case "down": {
+        const ws = hub.ws;
+        const why = !ws ? "no socket" : ws.readyState === WebSocket.OPEN ? "socket open, laptop not answering" : "socket closed";
+        return `WebSocket → ${host} · ${why} · sent ${hub.sent}`;
+      }
+      default: return `${Math.round(hub.deliveredPerSecond)} msg/s to ${host}`;
+    }
+  }
+
+  // ---- once a second: rates, hysteresis, the link ----------------------------
+  function tick() {
+    const now = performance.now();
+    // Messages actually handed to the socket this second — distinct from the
+    // rate the sensors produce, which is not evidence anything is arriving.
+    hub.deliveredPerSecond = hub.sent - hub.lastSentTotal;
+    hub.lastSentTotal = hub.sent;
+    hub.deliveryHistory.push(hub.deliveredPerSecond);
+    if (hub.deliveryHistory.length > 6) hub.deliveryHistory.shift();
+
+    // Exponential average, then only move the shown integer when the average
+    // has genuinely moved — otherwise 59.5 flickers forever.
+    for (const c of AVAILABLE) {
+      const hz = hub.counts[c.name] || 0; hub.counts[c.name] = 0;
+      const prev = hub.smoothedHz[c.name] ?? hz;
+      const value = prev + (hz - prev) * 0.3;
+      hub.smoothedHz[c.name] = value;
+      const shown = hub.displayHz[c.name];
+      if (shown !== undefined && Math.abs(shown - value) <= 0.6) continue;
+      hub.displayHz[c.name] = Math.round(value);
+    }
+    hub.link = computeLink(now);
+    render();
+  }
+
+  function computeLink(now) {
+    if (!hub.running) return "stopped";
+    const ws = hub.ws;
+    const open = ws && ws.readyState === WebSocket.OPEN;
+    // `alive` means the laptop has been heard from: it sends {"ok": t} every
+    // two seconds. An open socket with no heartbeat is exactly the case that
+    // shows green while delivering into nothing, so it does not count.
+    const alive = open && now - hub.lastHeard < 6000;
+    if (!alive) {
+      // Still trying, or freshly opened and waiting for the first heartbeat.
+      if (!ws || ws.readyState === WebSocket.CONNECTING || (open && now - hub.wsOpenedAt < 6000)) return "connecting";
+      return "down";
+    }
+    if (hub.deliveryHistory.length < 2) return "connecting";
+    const producing = Object.values(hub.smoothedHz).some((v) => v > 0.5);
+    if (hub.deliveryHistory.every((n) => n <= 0)) return producing ? "down" : "noData";
+    if (hub.deliveryHistory.some((n) => n <= 0)) return "intermittent";
+    return "sending";
+  }
+
+  // ---- the socket -----------------------------------------------------------
+  function connect() {
+    clearTimeout(hub.reconnectTimer); hub.reconnectTimer = null;
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${proto}//${location.host}/ws`);
+    hub.ws = ws;
+    ws.onopen = () => {
+      hub.wsOpenedAt = performance.now(); hub.attempt = 0;
+      const hello = { d: settings.deviceID, n: displayName(), ua: navigator.userAgent, platform: navigator.platform || "" };
+      if (settings.room) hello.room = settings.room;
+      ws.send(JSON.stringify({ hello }));
+    };
+    ws.onmessage = () => { hub.lastHeard = performance.now(); };   // only the laptop ever talks back
+    ws.onclose = () => { if (hub.running) scheduleReconnect(); };
+    ws.onerror = () => {};   // onclose follows and does the work
+  }
+  function scheduleReconnect() {
+    if (hub.reconnectTimer) return;   // one reconnect, not one per failed frame
+    const delay = Math.min(8000, 500 * 2 ** hub.attempt++);
+    hub.reconnectTimer = setTimeout(() => { hub.reconnectTimer = null; if (hub.running) connect(); }, delay);
+  }
+  function send(sensors, t) {
+    const ws = hub.ws;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (!hub.t0) hub.t0 = t;
+    ws.send(JSON.stringify({ d: settings.deviceID, q: ++hub.seq, t: (t - hub.t0) / 1000, s: sensors }));
+    hub.sent++;
+    for (const k in sensors) { hub.counts[k] = (hub.counts[k] || 0) + 1; hub.latest[k] = sensors[k]; }
+  }
+
+  // ---- sensors ----------------------------------------------------------------
+  // Everything converts to the toolkit's units on the way out, next to the API
+  // that needs it: the web reports rotation in deg/s and this toolkit uses
+  // rad/s everywhere else.
+  function onOrientation(e) {
+    hub.orientation = [e.alpha ?? 0, e.beta ?? 0, e.gamma ?? 0];
+    // On iOS webkitCompassHeading is the only true-north figure; alpha alone is
+    // relative to an arbitrary start. Android has no equivalent, so `heading`
+    // stays silent there rather than sending something that is not a heading.
+    if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) hub.heading = e.webkitCompassHeading;
+  }
+  function onMotion(e) {
+    const now = performance.now();
+    if (settings.rateCap && now - hub.lastMotionSend < 1000 / settings.rateCap - 2) return;
+    hub.lastMotionSend = now;
+    const a = e.acceleration, ag = e.accelerationIncludingGravity, rr = e.rotationRate, on = settings.enabled;
+    const s = {};
+    if (on.has("accel") && a && a.x !== null) s.accel = [a.x, a.y, a.z];
+    if (on.has("accelg") && ag && ag.x !== null) s.accelg = [ag.x, ag.y, ag.z];
+    if (on.has("gravity") && a && ag && a.x !== null && ag.x !== null) s.gravity = [ag.x - a.x, ag.y - a.y, ag.z - a.z];
+    if (on.has("gyro") && rr && rr.alpha !== null) s.gyro = [rr.alpha * D2R, rr.beta * D2R, rr.gamma * D2R];
+    if (on.has("attitude") && hub.orientation) s.attitude = hub.orientation;
+    if (on.has("heading") && hub.heading !== null) s.heading = [hub.heading];
+    if (Object.keys(s).length) send(s, now);
+  }
+  function needsMotion() { return AVAILABLE.some((c) => (c.web === "motion" || c.web === "orientation") && settings.enabled.has(c.name)); }
+
   // iOS 13+ gates devicemotion behind requestPermission(), which only works
-  // from a real user gesture and only in a secure context (HTTPS). Both
-  // events must be asked for separately: motion gives acceleration and
-  // rotation rate, orientation gives absolute attitude and compass heading.
+  // from a real user gesture and only over HTTPS.
   async function requestMotionPermission() {
     const needs = [];
     if (typeof DeviceMotionEvent?.requestPermission === "function") needs.push(DeviceMotionEvent);
     if (typeof DeviceOrientationEvent?.requestPermission === "function") needs.push(DeviceOrientationEvent);
-    if (!needs.length) return "unsupported-or-granted";  // Android, desktop, older iOS
+    if (!needs.length) return "granted";
     const results = await Promise.all(needs.map((E) => E.requestPermission().catch(() => "denied")));
     return results.every((r) => r === "granted") ? "granted" : "denied";
   }
-
-  // ---- websocket ----------------------------------------------------------
-  function connect() {
-    const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${proto}//${location.host}/ws`);
-    state.ws = ws;
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ hello: {
-        d: deviceId, n: nameBox.value.trim() || deviceId,
-        ua: navigator.userAgent, platform: navigator.platform || "",
-      }}));
-      setStatus("connected — sending", "ok");
-    };
-    ws.onclose = () => {
-      if (!state.running) return;
-      setStatus("disconnected — retrying…", "warn");
-      setTimeout(() => state.running && connect(), 1200);
-    };
-    ws.onerror = () => setStatus("connection failed — is the laptop still running phone-demo?", "bad");
-  }
-
-  // ---- sensor events ------------------------------------------------------
-  function onOrientation(e) {
-    // alpha/beta/gamma are degrees. On iOS webkitCompassHeading is the only
-    // true-north figure; alpha alone is relative to an arbitrary start.
-    state.lastAttitude = [e.alpha ?? 0, e.beta ?? 0, e.gamma ?? 0];
-    if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) {
-      state.heading = e.webkitCompassHeading;
-    }
-  }
-
-  function onMotion(e) {
-    const a = e.acceleration, ag = e.accelerationIncludingGravity, rr = e.rotationRate;
-    const sensors = {};
-    // e.acceleration is null on devices without a gyroscope (it needs sensor
-    // fusion to remove gravity); accelerationIncludingGravity is always there.
-    if (a && a.x !== null) sensors.accel = [a.x, a.y, a.z];
-    if (ag && ag.x !== null) sensors.accelg = [ag.x, ag.y, ag.z];
-    if (a && ag && a.x !== null && ag.x !== null) {
-      sensors.gravity = [ag.x - a.x, ag.y - a.y, ag.z - a.z];
-    }
-    // rotationRate is deg/s in the web API but rad/s everywhere else in this
-    // toolkit, so convert here rather than leaving a trap downstream.
-    if (rr && rr.alpha !== null) {
-      sensors.gyro = [rr.alpha * D2R, rr.beta * D2R, rr.gamma * D2R];
-    }
-    if (state.lastAttitude) sensors.attitude = state.lastAttitude;
-    if (state.heading !== null) sensors.heading = [state.heading];
-    if (!Object.keys(sensors).length) return;
-
-    const now = performance.now();
-    if (!state.t0) state.t0 = now;
-    const msg = {
-      d: deviceId, q: ++state.seq,
-      t: (now - state.t0) / 1000,
-      i: e.interval ?? 0,
-      s: sensors,
-    };
-    if (state.ws?.readyState === WebSocket.OPEN) {
-      state.ws.send(JSON.stringify(msg));
-      state.sent++;
-      state.stamps.push(now);
-      if (state.stamps.length > 90) state.stamps.shift();
-    }
-    render(sensors, now);
-  }
-
-  // ---- on-phone display ---------------------------------------------------
-  // Throttled to 2 Hz. Partly because rendering every sample at 60 Hz
-  // measurably slows the send loop on an older phone — but the load-bearing
-  // reason is that rapidly flickering numbers and bars are a visual/vestibular
-  // migraine trigger. Data still streams at full rate; only the paint is slow.
-  // Do not raise this for "smoothness".
-  let lastPaint = 0;
-  const fmt3 = (v) => v.map((n) => (n >= 0 ? " " : "") + n.toFixed(2)).join("  ");
-
-  function bar(el, value, full) {
-    const frac = Math.max(-1, Math.min(1, value / full));
-    el.style.left = (frac < 0 ? 50 + frac * 50 : 50) + "%";
-    el.style.width = Math.abs(frac) * 50 + "%";
-  }
-
-  function render(s, now) {
-    if (now - lastPaint < 500) return;
-    lastPaint = now;
-    if (s.accel) {
-      $("v-accel").textContent = fmt3(s.accel) + "  m/s²";
-      bar($("b-accel"), Math.hypot(...s.accel), 20);
-    }
-    if (s.gyro) {
-      $("v-gyro").textContent = fmt3(s.gyro) + "  rad/s";
-      bar($("b-gyro"), Math.hypot(...s.gyro), 10);
-    }
-    if (s.attitude) $("v-attitude").textContent = fmt3(s.attitude) + "  deg";
-    if (s.heading) $("v-heading").textContent = s.heading[0].toFixed(0) + "°";
-
-    const st = state.stamps;
-    const hz = st.length > 1 ? (st.length - 1) / ((st[st.length - 1] - st[0]) / 1000) : 0;
-    $("rate").textContent = `${hz.toFixed(1)} Hz · ${state.sent} sent · id ${deviceId}`;
-  }
-
-  // ---- start / stop -------------------------------------------------------
-  async function start() {
-    goBtn.disabled = true;
-    if (!window.isSecureContext) {
-      setStatus("This page is not on HTTPS, so iOS will not release motion data. Use the https:// URL from the QR code.", "bad");
-      goBtn.disabled = false; return;
-    }
+  let motionListening = false;
+  async function startMotion() {
+    if (motionListening || !needsMotion()) return;
     const perm = await requestMotionPermission();
-    if (perm === "denied") {
-      setStatus("Permission denied. Reload the page to be asked again, or turn on Settings → Apps → Safari → Motion & Orientation Access.", "bad");
-      goBtn.disabled = false; return;
+    if (perm !== "granted") {
+      for (const c of AVAILABLE) if (c.web === "motion" || c.web === "orientation")
+        hub.unavailable[c.name] = "Motion access denied — reload to be asked again";
+      return;
     }
-    try { localStorage.setItem("ap-name", nameBox.value.trim()); } catch {}
-
-    state.running = true;
-    connect();
     window.addEventListener("deviceorientation", onOrientation);
     window.addEventListener("devicemotion", onMotion);
-
-    // Without this the screen sleeps after ~30s and the stream dies mid-class.
-    // Backgrounding Safari suspends JS regardless — nothing can fix that.
-    try { state.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
-
-    panel.classList.remove("hide");
-    goBtn.textContent = "Stop"; goBtn.className = "stop"; goBtn.disabled = false;
-    goBtn.onclick = stop;
-    setStatus("connecting…", "warn");
-
-    // If no sample arrives, say which of the two likely causes it is.
-    setTimeout(() => {
-      if (state.running && state.sent === 0) {
-        setStatus(state.ws?.readyState === WebSocket.OPEN
-          ? "Connected, but this device is sending no motion events. Some iPads and desktop browsers have no accelerometer."
-          : "Cannot reach the laptop. The wifi may be blocking device-to-device traffic — ask for the tunnel URL.", "bad");
-      }
-    }, 2500);
+    motionListening = true;
   }
-
-  function stop() {
-    state.running = false;
-    window.removeEventListener("devicemotion", onMotion);
+  function stopMotion() {
     window.removeEventListener("deviceorientation", onOrientation);
-    state.ws?.close();
-    state.wakeLock?.release?.().catch(() => {});
-    state.wakeLock = null;
-    goBtn.textContent = "Start sending"; goBtn.className = ""; goBtn.onclick = start;
-    setStatus("stopped", "");
+    window.removeEventListener("devicemotion", onMotion);
+    motionListening = false;
   }
 
-  goBtn.onclick = start;
+  // Location: lat, lon, alt, speed — the same four the app sends, at the ~1 Hz
+  // the platform gives. A negative or missing speed becomes 0, as in the app.
+  function startLocation() {
+    if (hub.geoWatch !== null || !settings.enabled.has("location") || !navigator.geolocation) return;
+    hub.geoWatch = navigator.geolocation.watchPosition((p) => {
+      const c = p.coords;
+      send({ location: [c.latitude, c.longitude, c.altitude ?? 0, Math.max(0, c.speed ?? 0)] }, performance.now());
+    }, (err) => {
+      hub.unavailable.location = err.code === 1 ? "Location denied in Settings" : "No location fix";
+      stopLocation();
+    }, { enableHighAccuracy: true, maximumAge: 0 });
+  }
+  function stopLocation() {
+    if (hub.geoWatch !== null) navigator.geolocation.clearWatch(hub.geoWatch);
+    hub.geoWatch = null;
+  }
+
+  // Microphone: rms, peak and onset per 1024-sample buffer, computed in an
+  // AudioWorklet and discarded — nothing is recorded and no audio leaves the
+  // phone. Onset is the dB rise since the previous buffer, max(0, db − prev),
+  // the same definition as AudioProvider.swift. Echo cancellation, noise
+  // suppression and gain control are all turned off, the browser's equivalent
+  // of the app's `.measurement` mode: they compress exactly the transients this
+  // channel exists to catch.
+  const WORKLET = `
+    class Level extends AudioWorkletProcessor {
+      constructor() { super(); this.buf = new Float32Array(1024); this.n = 0; this.prev = -120; }
+      process(inputs) {
+        const ch = inputs[0] && inputs[0][0]; if (!ch) return true;
+        for (let i = 0; i < ch.length; i++) {
+          this.buf[this.n++] = ch[i];
+          if (this.n === 1024) {
+            let ss = 0, pk = 0;
+            for (let j = 0; j < 1024; j++) { const s = this.buf[j]; ss += s * s; const a = Math.abs(s); if (a > pk) pk = a; }
+            const rms = Math.sqrt(ss / 1024);
+            const db = 20 * Math.log10(Math.max(rms, 1e-6));
+            const onset = Math.max(0, db - this.prev); this.prev = db;
+            this.port.postMessage([rms, pk, onset]);
+            this.n = 0;
+          }
+        }
+        return true;
+      }
+    }
+    registerProcessor("ductus-level", Level);`;
+  async function startAudio() {
+    if (hub.audio || !settings.enabled.has("audio")) return;
+    if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) { hub.unavailable.audio = "No microphone access in this browser"; return; }
+    // The context is created synchronously, inside the tap that asked for it —
+    // iOS only lets a gesture start one, and awaiting the permission first
+    // would lose the gesture.
+    const ctx = new AudioContext();
+    const audio = { ctx, stream: null, node: null };
+    hub.audio = audio;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      if (hub.audio !== audio) { stream.getTracks().forEach((t) => t.stop()); return; }   // stopped while we waited
+      audio.stream = stream;
+      const url = URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" }));
+      await ctx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
+      const src = ctx.createMediaStreamSource(stream);
+      const node = new AudioWorkletNode(ctx, "ductus-level", { numberOfOutputs: 0 });
+      node.port.onmessage = (e) => send({ audio: e.data }, performance.now());
+      src.connect(node);
+      audio.node = node;
+      await ctx.resume();
+      delete hub.unavailable.audio;
+    } catch (err) {
+      hub.unavailable.audio = err?.name === "NotAllowedError" ? "Microphone denied in Settings" : "Microphone unavailable (" + (err?.message || err) + ")";
+      stopAudio();
+    }
+  }
+  function stopAudio() {
+    const a = hub.audio; if (!a) return;
+    hub.audio = null;
+    a.stream?.getTracks().forEach((t) => t.stop());
+    a.node?.disconnect();
+    a.ctx.close().catch(() => {});
+  }
+
+  // ---- start / stop / toggle -------------------------------------------------
+  async function start() {
+    if (hub.running) return;
+    hub.lastError = null;
+    if (!window.isSecureContext) {
+      hub.lastError = "This page is not on HTTPS, so iOS will not release motion data. Use the https:// URL from the QR code.";
+      render(); return;
+    }
+    hub.running = true;
+    hub.sent = 0; hub.lastSentTotal = 0; hub.deliveredPerSecond = 0; hub.deliveryHistory = []; hub.seq = 0; hub.t0 = 0;
+    hub.counts = {}; hub.smoothedHz = {}; hub.displayHz = {}; hub.latest = {}; hub.unavailable = {};
+    hub.lastHeard = 0; hub.attempt = 0; hub.link = "connecting";
+    connect();
+    // The screen changes before any permission prompt, and Stop stays live
+    // throughout: a prompt the person leaves unanswered must not leave the page
+    // reading "Stopped" with a dead button.
+    hub.displayTimer = setInterval(tick, 1000);
+    render();
+    // All three permission requests are made from this one tap.
+    await Promise.all([startMotion(), Promise.resolve(startLocation()), startAudio()]);
+    if (!hub.running) return;   // stopped while a prompt was up
+    // Without this the screen sleeps after ~30 s and the stream dies mid-class.
+    try { hub.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
+    render();
+  }
+  function stop() {
+    if (!hub.running) return;
+    hub.running = false;
+    stopMotion(); stopLocation(); stopAudio();
+    clearTimeout(hub.reconnectTimer); hub.reconnectTimer = null;
+    hub.ws?.close(); hub.ws = null;
+    hub.wakeLock?.release?.().catch(() => {}); hub.wakeLock = null;
+    clearInterval(hub.displayTimer); hub.displayTimer = null;
+    hub.link = "stopped"; hub.displayHz = {}; hub.smoothedHz = {};
+    render();
+  }
+  // A toggle takes effect mid-session, as in the app: no Stop, toggle, Start.
+  async function setChannel(name, on) {
+    if (on) settings.enabled.add(name); else settings.enabled.delete(name);
+    save();
+    delete hub.displayHz[name]; delete hub.smoothedHz[name]; delete hub.latest[name];
+    if (hub.running) {
+      const c = BY_NAME[name];
+      if (c.web === "motion" || c.web === "orientation") { if (needsMotion()) await startMotion(); else stopMotion(); }
+      if (c.web === "location") { if (on) startLocation(); else stopLocation(); }
+      if (c.web === "audio") { if (on) await startAudio(); else stopAudio(); }
+    }
+    render();
+  }
+
+  // ---- settings panel ---------------------------------------------------------
+  function renderSettings() {
+    $("name").value = settings.name;
+    $("device-id").textContent = settings.deviceID;
+    $("laptop-host").textContent = location.host;
+    $("room").value = settings.room;
+    $("autostart").checked = settings.autostart;
+    $("show-values").checked = settings.showValues;
+    for (const b of $("rate-seg").querySelectorAll("button")) b.setAttribute("aria-pressed", Number(b.dataset.rate) === settings.rateCap);
+    $("laptop-foot").textContent = `Connects to ${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws — the page and the socket share one address, which is why there is nothing to type. `
+      + (settings.room
+        ? `Room ${settings.room} is the key on the Max patch whose QR you scanned; that patch relays this room into its own receiver. Scan a different laptop's code to move.`
+        : "For Max, SuperCollider or Pd, phone-demo forwards everything as OSC: run it with --osc 127.0.0.1:7400. A browser cannot send UDP itself, so that hop is the one difference from the app.");
+  }
+  $("name").oninput = (e) => { settings.name = e.target.value; save(); };
+  $("room").oninput = (e) => { settings.room = e.target.value.trim(); save(); };
+  $("autostart").onchange = (e) => { settings.autostart = e.target.checked; save(); };
+  $("show-values").onchange = (e) => { settings.showValues = e.target.checked; save(); };
+  $("rate-seg").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; settings.rateCap = Number(b.dataset.rate); save(); renderSettings(); };
+  $("open-settings").onclick = () => { renderSettings(); $("settings").hidden = false; };
+  $("close-settings").onclick = () => { $("settings").hidden = true; render(); };
+
+  $("go").onclick = () => (hub.running ? stop() : start());
 
   // Re-arm the wake lock after the phone is unlocked or the tab is refocused;
   // iOS drops it on visibility change and the stream silently stops later.
   document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible" && state.running && !state.wakeLock) {
-      try { state.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
+    if (document.visibilityState === "visible" && hub.running && !hub.wakeLock) {
+      try { hub.wakeLock = await navigator.wakeLock?.request("screen"); } catch {}
     }
   });
+
+  buildChannels();
+  render();
+  if (settings.autostart) {
+    // iOS refuses the motion permission prompt outside a tap, so on a phone
+    // that has not granted it this only gets as far as connecting; the Start
+    // button then finishes the job. On Android and desktop it just starts.
+    start();
+  }
 })();
 </script>
 </body>

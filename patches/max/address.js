@@ -12,24 +12,45 @@
 // VPN connected is an 18.x tunnel address no phone on the room's wifi can
 // reach. So every interface is enumerated and scored instead.
 //
-//   in    port <n>   the UDP port the patch is listening on
-//   in    bang       look again (the address changes when you change network)
-//   out   host <ip>  best guess at the address a phone should send to
-//   out   url <url>  ductus:// link that configures the app in one tap
-//   out   alt <ip…>  every other address, because the guess is sometimes wrong
-//   out   qr <path>  a PNG of that link, for [fpic] to show and a phone to scan
+//   in    port <n>       the UDP port the patch is listening on
+//   in    target app|web|local
+//                        what the code should open: the web page on the hosted
+//                        server, keyed to this laptop's room (HOSTING.md; the
+//                        default); the Ductus app; or the web page phone-demo
+//                        serves from this laptop, for a LAN with no server in reach
+//   in    room <key>     this laptop's room key, from relay.js via `ap.room`
+//   in    webport <n>    the port a local phone-demo is serving on (8443 by default)
+//   in    weburl <url>   another server than server-config.js names; `weburl none` undoes it
+//   in    bang           look again (the address changes when you change network)
+//   out   host <ip>      best guess at the address a phone should send to
+//   out   url <url>      the link the code encodes — ductus://configure?… or https://…
+//   out   alt <ip…>      every other address, because the guess is sometimes wrong
+//   out   qr <path>      a PNG of that link, for [fpic] to show and a phone to scan
 
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const maxApi = require('max-api');
 const qr = require('./qr.js');
+const config = require('./server-config.js');
 
 // Interfaces that are never the answer: VPN tunnels, Apple's peer-to-peer and
 // low-latency WLAN links, Thunderbolt and virtualisation bridges.
 const SKIP = /^(lo|utun|tun|tap|ppp|ipsec|awdl|llw|bridge|vmnet|docker|gif|stf|anpi|ap)/;
 
 let port = 7400;
+
+// Which sender the code is for. All three speak the same wire format and land
+// on the same channels in this patch, so a patch does not care which one the
+// room is holding — but a phone does: a ductus:// link scans to nothing on a
+// phone without the app, and a web page cannot send UDP. `web` is the page on
+// the hosted server, which relay.js pulls into this receiver by room key;
+// `local` is the page a phone-demo on this laptop serves, which reaches this
+// receiver only if that phone-demo runs with `--osc 127.0.0.1:<port>`.
+let target = 'web';        // the hosted page is the default; the menu in ap.qr changes it
+let room = '';
+let webPort = 8443;
+let webUrlOverride = '';
 
 function score(iface, ip) {
     let s = 0;
@@ -77,7 +98,7 @@ function emit() {
     // a code carrying the old scheme scans to nothing at all, because iOS
     // routes by scheme and no installed app claims that one any more. It fails
     // silently and looks like a broken camera.
-    const url = 'ductus://configure?host=' + best.ip + '&osc=' + port + '&mode=osc';
+    const url = target === 'web' ? webUrl() : target === 'local' ? localUrl(best.ip) : appUrl(best.ip);
 
     maxApi.outlet('host', best.ip);
     maxApi.outlet('url', url);
@@ -86,6 +107,28 @@ function emit() {
     maxApi.outlet.apply(maxApi, ['alt'].concat(others.length ? others : ['none']));
 
     drawQr(url);
+}
+
+function appUrl(ip) {
+    return 'ductus://configure?host=' + ip + '&osc=' + port + '&mode=osc';
+}
+
+// The page on the hosted server, keyed to this laptop: whoever scans it joins
+// this room, and relay.js brings the room here. No room yet (relay.js has not
+// reported one) means a code with no key, which the page treats as "the laptop
+// that served me" — honest, but it will not reach this Max.
+function webUrl() {
+    const base = (webUrlOverride || config.SERVER).replace(/\/$/, '');
+    return base + '/' + (room ? '?room=' + encodeURIComponent(room) : '');
+}
+
+// The page a phone-demo on this laptop serves. Same hostname scheme phone-demo
+// prints: the dashed IP under local-ip.sh carries a real certificate, which iOS
+// needs before it will release motion data to a page. Nothing here checks that
+// phone-demo is actually running — a UDP receiver cannot — so the README says
+// to start it with `--osc 127.0.0.1:7400` before showing this code.
+function localUrl(ip) {
+    return 'https://' + ip.replace(/\./g, '-') + '.local-ip.sh:' + webPort + '/';
 }
 
 // The QR is redrawn whenever the address or the port changes, and never
@@ -116,6 +159,22 @@ function drawQr(url) {
 
 maxApi.addHandler('port', function (p) {
     if (p >= 1 && p <= 65535) { port = p; }
+    emit();
+});
+maxApi.addHandler('target', function (which) {
+    if (which === 'app' || which === 'web' || which === 'local') { target = which; }
+    emit();
+});
+maxApi.addHandler('room', function (key) {
+    room = typeof key === 'string' ? key : String(key);
+    emit();
+});
+maxApi.addHandler('webport', function (p) {
+    if (p >= 1 && p <= 65535) { webPort = p; }
+    emit();
+});
+maxApi.addHandler('weburl', function (url) {
+    webUrlOverride = (url && url !== 'none') ? String(url) : '';
     emit();
 });
 maxApi.addHandler(maxApi.MESSAGE_TYPES.BANG, emit);

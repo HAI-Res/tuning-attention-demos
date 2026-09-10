@@ -21,9 +21,14 @@ open with empty boxes instead of the bpatchers they need.
 open patches/max/attention-phone.maxpat
 ```
 
-Point the phone's camera at the QR code in the patch — it configures the app
-and starts sending. First packet triggers an iOS **Local Network** permission
-prompt; nothing arrives until you allow it.
+Point the phone's camera at the QR code in the patch. By default it opens a
+web page on the class server keyed to this laptop's **room** (the five-letter
+code in the receiver), and the phone's sensors arrive here through the
+receiver's relay — nothing to install. The menu under the code switches to the
+**Ductus app** link (OSC straight to Max over the LAN; the first packet
+triggers an iOS **Local Network** prompt) or to a page served from this laptop
+(needs `uv run phone-demo --osc 127.0.0.1:7400` running). The long version:
+[`docs/attention-phone-max.md`](../../docs/attention-phone-max.md).
 
 No phone handy? `python3 patches/max/poke.py` fakes one so you can check the
 patch itself works.

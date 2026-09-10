@@ -18,6 +18,10 @@ from aiohttp import web
 from .model import Reading
 
 Subscriber = Callable[[Reading], None]
+#: A room subscriber gets each phone's wire sample as it arrived (validated,
+#: with the phone's label added) rather than one `Reading` per sensor: the far
+#: end is a relay that re-emits it, and one message per sample is what it wants.
+RoomSubscriber = Callable[[dict], None]
 
 
 class RateMeter:
@@ -160,6 +164,12 @@ class SensorHub:
         self.dropped = 0
         """Subscriber exceptions swallowed. A misbehaving consumer must not
         take the socket down mid-class."""
+        self.room_of: dict[str, str] = {}
+        """Device → room. A room is one laptop's worth of phones: when the
+        receiver is hosted centrally, every student's Max relays the room its
+        QR named, and nothing else. A device that joined without a room
+        belongs to the laptop this process runs on, as before."""
+        self._rooms: dict[str, list[RoomSubscriber]] = {}
 
     def subscribe(self, fn: Subscriber) -> Subscriber:
         self._subs.append(fn)
@@ -204,6 +214,37 @@ class SensorHub:
         dev = self.devices.get(device)
         if dev is not None:
             dev.sockets = max(0, dev.sockets - 1)
+
+    # -- rooms ---------------------------------------------------------------
+
+    def join(self, device: str, room: str) -> None:
+        self.room_of[device] = room
+
+    def room_subscribe(self, room: str, fn: RoomSubscriber) -> RoomSubscriber:
+        self._rooms.setdefault(room, []).append(fn)
+        return fn
+
+    def room_unsubscribe(self, room: str, fn: RoomSubscriber) -> None:
+        subs = self._rooms.get(room)
+        if subs and fn in subs:
+            subs.remove(fn)
+        if subs == []:
+            del self._rooms[room]
+
+    def rooms(self) -> dict[str, int]:
+        """Room → number of relays listening. For /health."""
+        return {room: len(subs) for room, subs in self._rooms.items()}
+
+    def publish_room(self, device: str, sample: dict) -> None:
+        """Hand one validated sample to whoever is relaying this device's room."""
+        room = self.room_of.get(device)
+        if room is None:
+            return
+        for fn in self._rooms.get(room, ()):
+            try:
+                fn(sample)
+            except Exception:
+                self.dropped += 1
 
     def live(self) -> list[DeviceState]:
         """Devices worth showing, oldest connection first so a phone keeps its

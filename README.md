@@ -14,7 +14,7 @@ This repo is a read-only handout — clone it and use it.
 | **CNMAT Externals** package | the camera patch (`OSC-route`) | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
 | **git** and **uv** | the camera | `brew install git uv`, or [uv's installer](https://docs.astral.sh/uv/) |
 | a webcam | the camera | the laptop's own is fine |
-| the **Ductus** app | the phone demo | App Store, on an iPhone |
+| a phone | the phone demo | any phone's browser, via the QR in the patch; or the **Ductus** iOS app (App Store), which adds AirPods head motion |
 
 Everything else — the Python packages, the tracking models, Dobrian's `xfade~`
 crossfader — is fetched by the steps below or is already in this repo.
@@ -47,20 +47,28 @@ built-in `route` cannot).
 open patches/max/attention-phone.maxpat
 ```
 
-Point the phone's camera at the QR code in the patch — no laptop-side server,
-the phone talks to Max directly. Needs the **Ductus** app on an iPhone (App
-Store, by Chaparral Studios; it also reaches AirPods head motion and mic onset).
-The first packet triggers an iOS *Local Network* prompt; nothing arrives until
-you allow it.
+Point the phone's camera at the QR code in the patch. It opens a web page on
+the class server (`ductus-web-app.csail.mit.edu`) keyed to *your* laptop —
+the five-letter **room** shown in the receiver — and your phone's sensors
+appear in your Max. Nothing to install on the phone, and the laptop only
+needs Max: the receiver pulls your room down from the server through a script
+bundled with Max. Works on any wifi, because both ends only make outbound
+connections.
+
+The page is a copy of the Ductus app's screen: switch sensors on and off, watch
+the rate beside each, and tap **Start**. iOS asks once for motion access, and
+for the microphone if you switch that on. Keep the page in the foreground;
+browsers stop motion events in the background.
+
+**Have the Ductus app?** Switch the menu under the QR to *Ductus app* and
+scan again: the app sends OSC straight to Max over the LAN, at 100 Hz, and
+reaches AirPods head motion, which no browser can. The first packet triggers
+an iOS *Local Network* prompt; nothing arrives until you allow it.
 
 **Then try `3. gyro_buffer.1.maxpat`**: turn the phone and a sample scrubs
 and pitches with it. That is the quickest way to confirm the phone is really
 connected. It wants a `tudor.wav` in `patches/max/` — drop in any `.wav` under
 that name, it is deliberately not committed.
-
-There is also a browser sender (`uv run phone-demo`, then open the page it
-prints on the phone) that needs no app. It was not verified on class wifi as
-of this writing, so start with the app.
 
 ## Camera → Max
 
@@ -88,9 +96,10 @@ package-free version of the same idea laid out as one flat grid.
 | symptom | first thing to try |
 | --- | --- |
 | empty boxes in a patch | the `ln -sfn` above, then restart Max; an empty `OSC-route` means the CNMAT package isn't installed |
-| phone: nothing arrives | `python3 patches/max/poke.py` — patch or phone? Then Local Network permission, then port 7400 |
+| phone (web page): nothing arrives | the receiver's status line should read "connected to ductus-web-app.csail.mit.edu · room …"; the phone's page shows the same room. If the relay gave up, send it a `bang`. `https://ductus-web-app.csail.mit.edu/health` lists every live phone |
+| phone (app): nothing arrives | `python3 patches/max/poke.py` — patch or phone? Then Local Network permission, then port 7400 |
 | camera: nothing arrives | `python3 patches/max/cv-poke.py`; or quit Max and `uv run osc-dump 7500` |
-| phone on class wifi refuses | client isolation blocks phone→laptop; `uv run phone-demo --check` diagnoses, `--tunnel` works around it |
+| app on class wifi refuses | client isolation blocks phone→laptop OSC; use the web page (menu under the QR), which goes through the server |
 | two patches fight | only one receiver per port may be open — one phone patch, one camera patch |
 
 ## What's here
@@ -100,7 +109,8 @@ package-free version of the same idea laid out as one flat grid.
 | `patches/max/` | every Max patch, both sources, and the run sheet |
 | `src/attention_phone/` | the phone receiver, browser sender page, and diagnostics |
 | `src/attention_cv/` | the camera tracker and its OSC sender |
-| `docs/` | the long-form design notes for each half |
+| `docs/` | the long-form design notes for each half; `docs/hosting.md` is the class server |
+| `deploy/` | how the class server is run — not needed to use the demos |
 | `tests/` | `uv run pytest` |
 
 The iOS app's source and the course's research code live in other repos; this

@@ -40,14 +40,18 @@ def gait(t: float, *, stride_hz: float = 2.0, intensity: float = 1.0) -> tuple[f
     )
 
 
-async def one_phone(url: str, name: str, hz: float, seconds: float, ssl_ctx: ssl.SSLContext | None) -> None:
+async def one_phone(url: str, name: str, hz: float, seconds: float, ssl_ctx: ssl.SSLContext | None,
+                    room: str | None = None) -> None:
     device = f"fake-{name.lower().replace(' ', '-')}"
     interval = 1.0 / hz
     # A resting tilt, so attitude and gravity are not all zeros.
     tilt = random.uniform(-40, 40)
     async with aiohttp.ClientSession() as session:
         async with session.ws_connect(url, ssl=ssl_ctx, heartbeat=20) as ws:
-            await ws.send_str(json.dumps({"hello": {"d": device, "n": name, "ua": "fake-phone"}}))
+            hello = {"d": device, "n": name, "ua": "fake-phone"}
+            if room:
+                hello["room"] = room
+            await ws.send_str(json.dumps({"hello": hello}))
             t0 = time.monotonic()
             seq = 0
             deadline = t0
@@ -95,7 +99,7 @@ async def run(args: argparse.Namespace) -> int:
     names = [args.name] if args.name else NAMES
     phones = [
         one_phone(ws_url, names[i % len(names)] + ("" if args.count == 1 else f" {i + 1}"),
-                  args.hz, args.seconds, ssl_ctx)
+                  args.hz, args.seconds, ssl_ctx, room=args.room)
         for i in range(args.count)
     ]
     print(f"fake-phone → {ws_url}: {args.count} phone(s) at {args.hz:g} Hz")
@@ -114,6 +118,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hz", type=float, default=60.0, help="samples per second (default 60)")
     p.add_argument("--seconds", type=float, default=0.0, help="stop after N seconds (0 = forever)")
     p.add_argument("--name", help="label to use instead of the built-in names")
+    p.add_argument("--room", help="join this room, as a phone that scanned a laptop's QR would")
     p.add_argument("--insecure", action="store_true",
                    help="skip TLS verification, for hitting 127.0.0.1 with the local-ip.sh cert")
     args = p.parse_args(argv)

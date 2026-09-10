@@ -9,8 +9,12 @@ insecure socket.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import ipaddress
+import json
 import logging
+import time
 from pathlib import Path
 
 from aiohttp import web
@@ -18,7 +22,7 @@ from aiohttp import web
 from .hub import HUB, SensorHub
 from .model import AXES
 from .sources.sensorlogger import push_handler
-from .sources.web import websocket_handler
+from .sources.web import HEARTBEAT_INTERVAL, websocket_handler
 
 log = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).resolve().parent / "web"
@@ -71,9 +75,15 @@ def app_config_link(host_header: str, secure: bool) -> str | None:
     return f"ductus://configure?host={name}&port={port}&tls={1 if secure else 0}"
 
 
+def _is_secure(request: web.Request) -> bool:
+    # Behind nginx on the hosted server TLS ends at the proxy and aiohttp sees
+    # plain HTTP; the proxy says what the client actually used.
+    return request.secure or request.headers.get("X-Forwarded-Proto") == "https"
+
+
 async def _app(request: web.Request) -> web.Response:
     """A one-button page that opens the native app pre-configured."""
-    link = app_config_link(request.host, request.secure)
+    link = app_config_link(request.host, _is_secure(request))
     if link is None:
         inner = (
             "<p>This receiver is reached through a tunnel, so there is no LAN "
@@ -106,11 +116,77 @@ async def _app(request: web.Request) -> web.Response:
     return web.Response(text=html, content_type="text/html", headers={"Cache-Control": "no-store"})
 
 
+#: Samples a slow relay may have waiting before the oldest are dropped. A room
+#: is one laptop's phones — a few hundred messages a second — so a full queue
+#: means the relay's link is the problem, and stalling every phone's socket
+#: behind it would be the wrong fix.
+FEED_QUEUE = 2000
+
+
+async def feed_handler(request: web.Request) -> web.WebSocketResponse:
+    """`/feed?room=<key>` — one room's samples, as they arrive, to a relay.
+
+    This is the last hop when the receiver is hosted centrally: the Max patch on
+    a student's laptop opens this (outbound, so any network allows it) and
+    re-emits each sample as OSC into its own receiver. Each message is the
+    phone's own sample, validated and labelled::
+
+        {"d": "web-4f2a", "n": "Ada", "t": 17.36, "s": {"accel": [x, y, z], ...}}
+
+    plus the same `{"ok": t}` heartbeat the phones get, so the relay can tell a
+    live server from an open socket. The room key is the only credential: it is
+    in the QR the phones scan, so anyone who can see a laptop's screen can join
+    or tap that laptop's room, which is the exposure a LAN already has.
+    """
+    room = (request.query.get("room") or "").strip()
+    if not room:
+        raise web.HTTPBadRequest(text="feed needs ?room=<key>")
+    hub = request.app[HUB]
+    ws = web.WebSocketResponse(max_msg_size=64 * 1024)
+    await ws.prepare(request)
+
+    queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=FEED_QUEUE)
+    dropped = 0
+
+    def enqueue(sample: dict) -> None:
+        nonlocal dropped
+        if queue.full():
+            queue.get_nowait()
+            dropped += 1
+        queue.put_nowait(sample)
+
+    hub.room_subscribe(room, enqueue)
+    log.info("relay for room %s from %s", room, request.remote or "?")
+
+    async def writer() -> None:
+        while not ws.closed:
+            try:
+                sample = await asyncio.wait_for(queue.get(), HEARTBEAT_INTERVAL)
+            except TimeoutError:
+                await ws.send_str(json.dumps({"ok": round(time.time(), 3)}))
+                continue
+            await ws.send_str(json.dumps(sample))
+
+    pump = asyncio.create_task(writer())
+    try:
+        # The relay never sends anything; this loop exists to notice the close.
+        async for _ in ws:
+            pass
+    finally:
+        pump.cancel()
+        with contextlib.suppress(asyncio.CancelledError, ConnectionResetError):
+            await pump
+        hub.room_unsubscribe(room, enqueue)
+        log.info("relay for room %s closed, %d samples dropped", room, dropped)
+    return ws
+
+
 async def _health(request: web.Request) -> web.Response:
     hub = request.app[HUB]
     return web.json_response(
         {
             "ok": True,
+            "rooms": hub.rooms(),
             "devices": [
                 {
                     "device": d.device,
@@ -142,6 +218,7 @@ def build_app(hub: SensorHub) -> web.Application:
             web.get("/app", _app),
             web.get("/probe", _probe),
             web.get("/ws", websocket_handler),
+            web.get("/feed", feed_handler),
             web.post("/sensorlogger", push_handler),
             web.get("/health", _health),
         ]

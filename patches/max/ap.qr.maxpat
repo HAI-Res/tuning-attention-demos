@@ -410,6 +410,208 @@
      "fontname": "Arial",
      "fontsize": 12
     }
+   },
+   {
+    "box": {
+     "id": "obj-18",
+     "maxclass": "umenu",
+     "patching_rect": [
+      8.0,
+      300.0,
+      256.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "items": [
+      "Web page \u2014 server",
+      ",",
+      "Ductus app",
+      ",",
+      "Web page \u2014 this laptop"
+     ],
+     "numinlets": 1,
+     "numoutlets": 3,
+     "outlettype": [
+      "int",
+      "",
+      ""
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      0.0,
+      286.0,
+      256.0,
+      22.0
+     ],
+     "annotation": "Which sender the code is for. Default: the web page on the hosted server, keyed to this laptop's room, relayed here by ap.receive. The app talks to Max directly over the LAN; the local page needs phone-demo --osc 127.0.0.1:7400 on this laptop."
+    }
+   },
+   {
+    "box": {
+     "id": "obj-19",
+     "maxclass": "newobj",
+     "patching_rect": [
+      8.0,
+      560.0,
+      60.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "sel 0 1 2",
+     "numinlets": 2,
+     "numoutlets": 4,
+     "outlettype": [
+      "bang",
+      "bang",
+      "bang",
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-20",
+     "maxclass": "message",
+     "patching_rect": [
+      8.0,
+      588.0,
+      74.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "target web",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-21",
+     "maxclass": "message",
+     "patching_rect": [
+      90.0,
+      588.0,
+      78.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "target app",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-22",
+     "maxclass": "comment",
+     "patching_rect": [
+      8.0,
+      616.0,
+      760.0,
+      34.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "server (default): https://ductus-web-app.csail.mit.edu/?room=<key>, relayed here by ap.receive. app: ductus://configure?\u2026 scans straight into the app over the LAN. local: https://<dashed-ip>.local-ip.sh:8443/ from a phone-demo on this laptop run with --osc 127.0.0.1:7400.",
+     "numinlets": 1,
+     "numoutlets": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-23",
+     "maxclass": "message",
+     "patching_rect": [
+      176.0,
+      588.0,
+      84.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "target local",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-24",
+     "maxclass": "newobj",
+     "patching_rect": [
+      320.0,
+      376.0,
+      90.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "r ap.room",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-25",
+     "maxclass": "newobj",
+     "patching_rect": [
+      320.0,
+      404.0,
+      90.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "prepend room",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-26",
+     "maxclass": "comment",
+     "patching_rect": [
+      416.0,
+      378.0,
+      360.0,
+      20.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "this laptop's room key, from the receiver's relay",
+     "numinlets": 1,
+     "numoutlets": 0
+    }
    }
   ],
   "lines": [
@@ -591,6 +793,132 @@
      "hidden": 0,
      "source": [
       "obj-15",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-19",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-18",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-20",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-19",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-21",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-19",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-10",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-20",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-10",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-21",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-23",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-19",
+      2
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-10",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-23",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-25",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-24",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-10",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-25",
       0
      ]
     }

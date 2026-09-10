@@ -13,7 +13,7 @@
    80.0,
    100.0,
    900.0,
-   1330.0
+   1390.0
   ],
   "bglocked": 0,
   "openinpresentation": 1,
@@ -442,7 +442,7 @@
      "maxclass": "comment",
      "patching_rect": [
       8.0,
-      742.0,
+      802.0,
       700.0,
       20.0
      ],
@@ -460,7 +460,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      768.0,
+      828.0,
       100.0,
       22.0
      ],
@@ -482,7 +482,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      768.0,
+      828.0,
       120.0,
       22.0
      ],
@@ -501,7 +501,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      796.0,
+      856.0,
       100.0,
       22.0
      ],
@@ -523,7 +523,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      796.0,
+      856.0,
       120.0,
       22.0
      ],
@@ -542,7 +542,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      824.0,
+      884.0,
       100.0,
       22.0
      ],
@@ -564,7 +564,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      824.0,
+      884.0,
       120.0,
       22.0
      ],
@@ -583,7 +583,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      852.0,
+      912.0,
       100.0,
       22.0
      ],
@@ -605,7 +605,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      852.0,
+      912.0,
       120.0,
       22.0
      ],
@@ -624,7 +624,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      880.0,
+      940.0,
       100.0,
       22.0
      ],
@@ -646,7 +646,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      880.0,
+      940.0,
       120.0,
       22.0
      ],
@@ -665,7 +665,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      908.0,
+      968.0,
       100.0,
       22.0
      ],
@@ -687,7 +687,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      908.0,
+      968.0,
       120.0,
       22.0
      ],
@@ -706,7 +706,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      936.0,
+      996.0,
       100.0,
       22.0
      ],
@@ -728,7 +728,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      936.0,
+      996.0,
       120.0,
       22.0
      ],
@@ -747,7 +747,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      964.0,
+      1024.0,
       100.0,
       22.0
      ],
@@ -769,7 +769,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      964.0,
+      1024.0,
       120.0,
       22.0
      ],
@@ -788,7 +788,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      992.0,
+      1052.0,
       100.0,
       22.0
      ],
@@ -810,7 +810,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      992.0,
+      1052.0,
       120.0,
       22.0
      ],
@@ -829,7 +829,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1020.0,
+      1080.0,
       100.0,
       22.0
      ],
@@ -851,7 +851,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1020.0,
+      1080.0,
       120.0,
       22.0
      ],
@@ -870,7 +870,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1048.0,
+      1108.0,
       100.0,
       22.0
      ],
@@ -892,7 +892,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1048.0,
+      1108.0,
       120.0,
       22.0
      ],
@@ -911,7 +911,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1076.0,
+      1136.0,
       100.0,
       22.0
      ],
@@ -933,7 +933,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1076.0,
+      1136.0,
       120.0,
       22.0
      ],
@@ -952,7 +952,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1104.0,
+      1164.0,
       100.0,
       22.0
      ],
@@ -974,7 +974,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1104.0,
+      1164.0,
       120.0,
       22.0
      ],
@@ -993,7 +993,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1132.0,
+      1192.0,
       100.0,
       22.0
      ],
@@ -1015,7 +1015,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1132.0,
+      1192.0,
       120.0,
       22.0
      ],
@@ -1034,7 +1034,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1160.0,
+      1220.0,
       100.0,
       22.0
      ],
@@ -1056,7 +1056,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1160.0,
+      1220.0,
       120.0,
       22.0
      ],
@@ -1075,7 +1075,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1188.0,
+      1248.0,
       100.0,
       22.0
      ],
@@ -1097,7 +1097,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1188.0,
+      1248.0,
       120.0,
       22.0
      ],
@@ -1116,7 +1116,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1216.0,
+      1276.0,
       100.0,
       22.0
      ],
@@ -1138,7 +1138,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       118.0,
-      1216.0,
+      1276.0,
       120.0,
       22.0
      ],
@@ -1157,7 +1157,7 @@
      "maxclass": "newobj",
      "patching_rect": [
       8.0,
-      1250.0,
+      1310.0,
       84.0,
       22.0
      ],
@@ -1178,7 +1178,7 @@
      "maxclass": "message",
      "patching_rect": [
       102.0,
-      1250.0,
+      1310.0,
       400.0,
       22.0
      ],
@@ -1199,7 +1199,7 @@
      "maxclass": "comment",
      "patching_rect": [
       512.0,
-      1252.0,
+      1312.0,
       300.0,
       20.0
      ],
@@ -1209,6 +1209,261 @@
      "numoutlets": 0,
      "fontname": "Arial",
      "fontsize": 12
+    }
+   },
+   {
+    "box": {
+     "id": "obj-57",
+     "maxclass": "message",
+     "patching_rect": [
+      8.0,
+      90.0,
+      200.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      0.0,
+      76.0,
+      200.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-58",
+     "maxclass": "message",
+     "patching_rect": [
+      8.0,
+      118.0,
+      200.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 10,
+     "text": "",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ],
+     "presentation": 1,
+     "presentation_rect": [
+      0.0,
+      102.0,
+      200.0,
+      22.0
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-59",
+     "maxclass": "comment",
+     "patching_rect": [
+      216.0,
+      92.0,
+      400.0,
+      20.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "\u2191 room key and server status, from relay.js below",
+     "numinlets": 1,
+     "numoutlets": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-60",
+     "maxclass": "comment",
+     "patching_rect": [
+      8.0,
+      660.0,
+      760.0,
+      34.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "numinlets": 1,
+     "numoutlets": 0,
+     "text": "The hosted path (HOSTING.md). relay.js pulls this laptop's room from the server and re-emits each sample as /phone/<name>/<channel>, the same message udpreceive gives the app \u2014 so it goes into the same js. The room key is broadcast as ap.room for every ap.qr to draw."
+    }
+   },
+   {
+    "box": {
+     "id": "obj-61",
+     "maxclass": "newobj",
+     "patching_rect": [
+      8.0,
+      700.0,
+      270.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "node.script relay.js @autostart 1",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "",
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-62",
+     "maxclass": "newobj",
+     "patching_rect": [
+      290.0,
+      700.0,
+      80.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "delay 2500",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      "bang"
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-63",
+     "maxclass": "comment",
+     "patching_rect": [
+      380.0,
+      702.0,
+      380.0,
+      20.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "Node may not be listening the instant we load",
+     "numinlets": 1,
+     "numoutlets": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-64",
+     "maxclass": "newobj",
+     "patching_rect": [
+      8.0,
+      728.0,
+      160.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "route room status server",
+     "numinlets": 2,
+     "numoutlets": 4,
+     "outlettype": [
+      "",
+      "",
+      "",
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-65",
+     "maxclass": "newobj",
+     "patching_rect": [
+      8.0,
+      756.0,
+      100.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "s ap.room",
+     "numinlets": 1,
+     "numoutlets": 0
+    }
+   },
+   {
+    "box": {
+     "id": "obj-66",
+     "maxclass": "newobj",
+     "patching_rect": [
+      120.0,
+      756.0,
+      110.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "prepend set room",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-67",
+     "maxclass": "newobj",
+     "patching_rect": [
+      240.0,
+      756.0,
+      84.0,
+      22.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "prepend set",
+     "numinlets": 2,
+     "numoutlets": 1,
+     "outlettype": [
+      ""
+     ]
+    }
+   },
+   {
+    "box": {
+     "id": "obj-68",
+     "maxclass": "comment",
+     "patching_rect": [
+      340.0,
+      758.0,
+      420.0,
+      20.0
+     ],
+     "style": "",
+     "fontname": "Arial",
+     "fontsize": 12,
+     "text": "\u2190 unmatched messages are the data; they join the UDP stream in the js",
+     "numinlets": 1,
+     "numoutlets": 0
     }
    }
   ],
@@ -1882,6 +2137,132 @@
      "source": [
       "obj-54",
       0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-62",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-11",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-61",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-62",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-64",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-61",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-65",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-64",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-66",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-64",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-57",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-66",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-67",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-64",
+      1
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-58",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-67",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "obj-15",
+      0
+     ],
+     "disabled": 0,
+     "hidden": 0,
+     "source": [
+      "obj-64",
+      3
      ]
     }
    }

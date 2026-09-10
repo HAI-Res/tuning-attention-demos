@@ -1,0 +1,34 @@
+# /etc/systemd/system/ductus.service — the hosted attention-phone receiver.
+#
+# Serves the Ductus web page and takes every phone in the class; each student's
+# Max pulls its own room back down through /feed. nginx in front terminates TLS
+# (deploy/nginx-ductus.conf) and proxies to this on localhost.
+[Unit]
+Description=attention-phone receiver (Ductus web page, /ws, /feed)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ductus
+Group=ductus
+WorkingDirectory=/opt/attention-phone
+# --http: TLS is nginx's job.  --bind 127.0.0.1: only nginx may reach it.
+# --headless: no terminal readout, so the journal is not repainted 10× a second.
+ExecStart=/opt/attention-phone/.venv/bin/phone-demo --http --bind 127.0.0.1 --port 8080 --headless --stale 30
+Restart=always
+RestartSec=3
+
+# It holds nothing but live sensor numbers; box it in anyway.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# read-only, not true: uv keeps the interpreter the venv points at under
+# /home/ductus/.local, and hiding /home made every exec fail with EACCES.
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

@@ -103,7 +103,7 @@ async def run(args: argparse.Namespace) -> int:
 
     runner = web.AppRunner(app, access_log=None)
     await runner.setup()
-    site = web.TCPSite(runner, host="0.0.0.0", port=args.port, ssl_context=ssl_ctx)  # noqa: S104
+    site = web.TCPSite(runner, host=args.bind, port=args.port, ssl_context=ssl_ctx)
     await site.start()
 
     extra: list[str] = []
@@ -164,12 +164,18 @@ async def run(args: argparse.Namespace) -> int:
     display = LiveDisplay(hub, url, sensor=args.sensor)
     period = 1.0 / max(1.0, args.refresh)
     try:
-        while not stop.is_set():
-            display.render()
-            with contextlib.suppress(TimeoutError):
-                await asyncio.wait_for(stop.wait(), period)
+        if args.headless:
+            # As a service there is no terminal to repaint; the journal would
+            # otherwise get the cursor-movement escapes ten times a second.
+            await stop.wait()
+        else:
+            while not stop.is_set():
+                display.render()
+                with contextlib.suppress(TimeoutError):
+                    await asyncio.wait_for(stop.wait(), period)
     finally:
-        display.finish()
+        if not args.headless:
+            display.finish()
         for t in tasks:
             t.cancel()
         if client:
@@ -190,6 +196,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--port", type=int, default=8443, help="port to serve on (default 8443)")
     p.add_argument("--host", help="address to advertise, overriding auto-detection")
+    p.add_argument("--bind", default="0.0.0.0",
+                   help="interface to listen on (default all; 127.0.0.1 behind a proxy)")
+    p.add_argument("--headless", action="store_true",
+                   help="no live terminal readout — for running as a service")
     p.add_argument("--http", action="store_true",
                    help="serve plain HTTP; iOS will refuse motion access, desktop only")
     p.add_argument("--tunnel", action="store_true",

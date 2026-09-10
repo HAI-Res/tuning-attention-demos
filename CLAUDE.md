@@ -25,6 +25,13 @@ yourself raising a refresh rate, adding an animation, or wiring a number box
 straight to a 100 Hz stream because it feels sluggish, that sluggishness is
 the feature.
 
+**The web page has no animations or transitions of its own, at all.** No CSS
+`transition`, no `animation`, no sliding sheet, no fading status, no pulse —
+the native app's status-light pulse is deliberately *not* reproduced there. The
+only motion allowed is what the browser draws for its own controls (a native
+switch flipping). Same reason as the paint cap: the person holding the phone is
+moving, and motion on the screen at the same time is a vestibular trigger.
+
 ## The status light may never claim more than is known
 
 A green light means the far end has been *heard from*, not that a send

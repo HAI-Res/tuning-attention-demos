@@ -5,7 +5,11 @@ short keys keep both the JSON and the parse cheap.
 
 Phone → laptop, first message only::
 
-    {"hello": {"d": "ph-a3f9", "n": "Ada", "ua": "...", "platform": "..."}}
+    {"hello": {"d": "ph-a3f9", "n": "Ada", "ua": "...", "platform": "...", "room": "k7f2q"}}
+
+`room` is optional. It names the laptop this phone belongs to when the receiver
+is hosted centrally (see HOSTING.md); that laptop's Max relays the room from
+`/feed?room=k7f2q`. Without it the phone belongs to this process, as always.
 
 Phone → laptop, per sample — one message carries every sensor that shares a
 timestamp, because `devicemotion` delivers them together::
@@ -148,7 +152,11 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                 if device:
                     hub.attach(device, label)
                     attached = True
-                    log.info("%s (%s) joined from %s", label, device, peer)
+                    room = hello.get("room")
+                    if isinstance(room, str) and room.strip():
+                        hub.join(device, room.strip())
+                    log.info("%s (%s) joined from %s%s", label, device, peer,
+                             f" into room {room}" if room else "")
                 continue
 
             if (q := payload.get("q")) is not None:
@@ -156,7 +164,17 @@ async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
                     stats.note(int(q))
                 except (TypeError, ValueError):
                     pass
-            hub.publish_all(parse_sample(payload))
+            readings = list(parse_sample(payload))
+            hub.publish_all(readings)
+            if readings and readings[0].device in hub.room_of:
+                # The relay gets the sample as one message, already validated
+                # and already labelled, so it need not know about names.
+                hub.publish_room(readings[0].device, {
+                    "d": readings[0].device,
+                    "n": hub.devices[readings[0].device].label,
+                    "t": readings[0].t,
+                    "s": {r.sensor: list(r.values) for r in readings},
+                })
     finally:
         beat.cancel()
         with contextlib.suppress(asyncio.CancelledError):
