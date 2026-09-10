@@ -83,7 +83,8 @@ Each hand is a voice. Pinch opens a lowpass filter, hand height blends between
 two waveforms, moving toward the camera makes it louder, left–right pans it.
 The left hand plays the fundamental, the right hand a fifth up. Double-click a
 hand in the patch to see how. First time, calibrate the pinch and size ranges
-to your own hand — the readouts and the boxes to type into are described in
+to your own hand: each hand has two readouts inside it, updated twice a
+second, and the values to type into are at the top of the patch — see
 [`patches/max/README.md`](patches/max/README.md).
 
 If your left hand drives the right-hand voice, add `--swap-hands`. Drop

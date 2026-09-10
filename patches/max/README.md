@@ -98,9 +98,11 @@ box in place of any of them is a missing dependency, not a broken patch.
 
 **Calibrate first.** Pinch arrives in metres, size in image units, and both
 depend on the hand and the camera. Defaults are 0.02–0.1 m for the pinch and
-0.1–0.3 for size. Read the values off a hand at the extremes — fingers touching
-and wide apart; arm's length and close to the camera — and type them into the
-messages at the top; they reach both hands by `send`. Outside the range is
+0.1–0.3 for size. Open a hand and watch its two readouts (beside `OSC-route /pinch` and
+`OSC-route /size`, updated twice a second, on purpose) at the extremes —
+fingers touching and wide apart; arm's length and close to the camera — and
+type those values into the messages at the top; they reach both hands by
+`send`. Outside the range is
 clipped, not extrapolated.
 
 **Why the waveform blend is hard to hear with the pinch closed:** the lowpass
