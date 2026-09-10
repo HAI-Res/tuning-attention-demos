@@ -66,7 +66,7 @@ edit the `buffer~ tudor tudor.wav` object to point elsewhere.
 ## Camera → Max
 
 ```sh
-uv sync --extra cv && uv run fetch-models     # once; MediaPipe is ~120 MB
+uv sync && uv run fetch-models     # once; MediaPipe is ~120 MB of it
 uv run track-demo --osc max                   # the camera, as OSC on UDP 7500
 open patches/max/attention-cv.maxpat          # receiver, three taps, a worked example
 ```

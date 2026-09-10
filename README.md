@@ -21,7 +21,7 @@ For the camera you also need [uv](https://docs.astral.sh/uv/) (`brew install uv`
 then:
 
 ```sh
-uv sync --extra cv          # Python 3.13, MediaPipe, OpenCV (~120 MB)
+uv sync          # Python 3.13, MediaPipe, OpenCV — ~120 MB
 uv run fetch-models         # the tracking models, ~30 MB, into models/
 ```
 
@@ -77,7 +77,7 @@ the pinch calibration you will want to do first:
 | `src/attention_phone/` | the phone receiver, browser sender page, and diagnostics |
 | `src/attention_cv/` | the camera tracker and its OSC sender |
 | `docs/` | the long-form design notes for each half |
-| `tests/` | `uv run --extra cv pytest` |
+| `tests/` | `uv run pytest` |
 
 The iOS app's source and the course's research code live in other repos; this
 one is only what is needed to run the demos.

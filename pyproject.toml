@@ -16,12 +16,8 @@ dependencies = [
     # a URL like https://10-0-0-184.local-ip.sh:8443 in under a minute.
     "segno>=1.6",
     "numpy>=2.0",
-]
-
-[project.optional-dependencies]
-# attention_cv — the camera. Kept optional because MediaPipe + OpenCV is
-# ~120 MB and the phone demo has no use for it:  uv sync --extra cv
-cv = [
+    # attention_cv — the camera. MediaPipe + OpenCV is ~120 MB; it used to be
+    # an optional extra, but one `uv sync` that always works beat the saving.
     # 1.0.x vision graphs crash on macOS arm64 with a Metal graph-service check
     # (DrishtiMetalHelper / "Service is unavailable"), so stay on the 0.10.3x line.
     "mediapipe>=0.10.30,<1.0",
@@ -33,7 +29,7 @@ cv = [
 phone-demo = "attention_phone.phone_demo:main"
 phone-cert = "attention_phone.certs:main"
 fake-phone = "attention_phone.fake_phone:main"
-# camera (need --extra cv)
+# camera
 fetch-models = "attention_cv.models:main"
 track-demo = "attention_cv.track_demo:main"
 pose-demo = "attention_cv.pose_demo:main"
