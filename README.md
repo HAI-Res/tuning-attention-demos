@@ -6,6 +6,19 @@ the patches; Python only for the camera and for optional phone tools.
 
 This repo is a read-only handout — clone it and use it.
 
+## What you need
+
+| | for | where |
+| --- | --- | --- |
+| **Max 8** | everything | cycling74.com; the free 30-day trial is enough for the term's demos |
+| **CNMAT Externals** package | the camera patch (`OSC-route`) | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
+| **git** and **uv** | the camera | `brew install git uv`, or [uv's installer](https://docs.astral.sh/uv/) |
+| a webcam | the camera | the laptop's own is fine |
+| the **Ductus** app | the phone demo | App Store, on an iPhone |
+
+Everything else — the Python packages, the tracking models, Dobrian's `xfade~`
+crossfader — is fetched by the steps below or is already in this repo.
+
 ## Setup, once per machine
 
 ```sh
@@ -15,15 +28,18 @@ ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention
 ```
 
 Then restart Max — it scans its search path at launch. Without the link,
-patches open with empty boxes where the bpatchers should be.
+patches open with empty boxes where the bpatchers and abstractions should be.
 
-For the camera you also need [uv](https://docs.astral.sh/uv/) (`brew install uv`),
-then:
+For the camera:
 
 ```sh
-uv sync          # Python 3.13, MediaPipe, OpenCV — ~120 MB
-uv run fetch-models         # the tracking models, ~30 MB, into models/
+uv sync                     # Python 3.13, MediaPipe, OpenCV — about 120 MB
+uv run fetch-models         # the tracking models, about 30 MB, into models/
 ```
+
+and the CNMAT Externals package from Max's Package Manager (one click; it
+provides `OSC-route`, which splits an OSC address one level at a time — the
+built-in `route` cannot).
 
 ## Phone → Max
 
@@ -49,21 +65,29 @@ of this writing, so start with the app.
 ## Camera → Max
 
 ```sh
-uv run track-demo --osc max                   # laptop camera → OSC on UDP 7500
-open patches/max/cv-pinch-synth.maxpat        # two hands, two voices
+uv run track-demo --track hands --dim 0 --osc max   # hands only, black background, OSC on UDP 7500
+open patches/max/cv-synth.maxpat                    # two hands, two voices
 ```
 
-Pinch opens a lowpass, hand height blends square into saw, left–right pans,
-the right hand plays a fifth up. `attention-cv.maxpat` is the plainer starter
-with a receiver and taps for building your own mapping. Details, including
-the pinch calibration you will want to do first:
+Each hand is a voice. Pinch opens a lowpass filter, hand height blends between
+two waveforms, moving toward the camera makes it louder, left–right pans it.
+The left hand plays the fundamental, the right hand a fifth up. Double-click a
+hand in the patch to see how. First time, calibrate the pinch and size ranges
+to your own hand — the readouts and the boxes to type into are described in
 [`patches/max/README.md`](patches/max/README.md).
+
+If your left hand drives the right-hand voice, add `--swap-hands`. Drop
+`--dim 0` to see yourself; `d` and `t` cycle the view while it runs.
+
+`attention-cv.maxpat` is the plainer starter with a receiver and taps for
+building your own mapping, and `cv-pinch-synth.maxpat` is an earlier,
+package-free version of the same idea laid out as one flat grid.
 
 ## If it's not working
 
 | symptom | first thing to try |
 | --- | --- |
-| empty boxes in a patch | the `ln -sfn` above, then restart Max |
+| empty boxes in a patch | the `ln -sfn` above, then restart Max; an empty `OSC-route` means the CNMAT package isn't installed |
 | phone: nothing arrives | `python3 patches/max/poke.py` — patch or phone? Then Local Network permission, then port 7400 |
 | camera: nothing arrives | `python3 patches/max/cv-poke.py`; or quit Max and `uv run osc-dump 7500` |
 | phone on class wifi refuses | client isolation blocks phone→laptop; `uv run phone-demo --check` diagnoses, `--tunnel` works around it |

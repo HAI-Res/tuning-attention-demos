@@ -1,13 +1,15 @@
 # Max patches
 
-Two sources into Max, vanilla Max 8 — no packages, no externals: a phone's
-sensors (UDP 7400) and a laptop camera's hand/body tracking (UDP 7500). One
-receiver per source may be open at a time; the two sources can run together.
+Two sources into Max: a phone's sensors (UDP 7400) and a laptop camera's hand
+tracking (UDP 7500). The phone patches are vanilla Max 8; the camera class
+patch additionally needs the **CNMAT Externals** package (for `OSC-route`) from
+Max's Package Manager. One receiver per source may be open at a time; the two
+sources can run together.
 
 ## Setup (once per machine)
 
 ```sh
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/attention-phone
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention
 ```
 
 Restart Max — it only scans its search path at launch. Without this, patches
@@ -46,7 +48,8 @@ and all three fight over UDP 7400).
 | `cv.point.maxpat` | a camera tap: channel dropdown + outlets |
 | `cv.js` | splits camera OSC addresses for the receiver; must stay beside the patches |
 | `cv-poke.py` | fakes the camera for testing without one |
-| `cv-pinch-synth.maxpat` | class demo — two hands, two voices; see below |
+| `cv-synth.maxpat` | **the class demo** — two hands, two voices, each a subpatcher; see below |
+| `cv-pinch-synth.maxpat` | the same idea as one flat grid, no packages needed; kept for comparison |
 | `xfade~.maxpat` | Christopher Dobrian's crossfader, vendored; see below |
 
 ## Using a tap
@@ -66,9 +69,9 @@ edit the `buffer~ tudor tudor.wav` object to point elsewhere.
 ## Camera → Max
 
 ```sh
-uv sync && uv run fetch-models     # once; MediaPipe is ~120 MB of it
-uv run track-demo --osc max                   # the camera, as OSC on UDP 7500
-open patches/max/attention-cv.maxpat          # receiver, three taps, a worked example
+uv sync && uv run fetch-models                     # once; MediaPipe is ~120 MB of it
+uv run track-demo --track hands --dim 0 --osc max   # hands only, black background, OSC on UDP 7500
+open patches/max/attention-cv.maxpat               # receiver, three taps, a worked example
 ```
 
 `cv.point` taps work like `ap.channel`: copy one, lock the patch, pick a
@@ -80,23 +83,51 @@ that tracks distance from the camera), `cv.pose.0.center` (hip midpoint),
 
 No camera handy? `python3 patches/max/cv-poke.py` fakes one.
 
-## Class demo: `cv-pinch-synth.maxpat`
+## Class demo: `cv-synth.maxpat`
 
-Each hand on the camera is a saw/square voice: pinch (thumb tip to index tip)
-opens a lowpass, hand height blends square (low) into saw (raised), left–right
-pans, leaving the frame fades out. Left hand plays the base pitch, right hand a
-fifth up. Every blend and pan is equal-power; every control ends in an 80 ms
-`line~` ramp. It owns UDP 7500 itself, so close `attention-cv.maxpat` first.
+```sh
+open patches/max/cv-synth.maxpat
+```
 
-The patch is one flat file laid out as a grid: rows are the stages of the chain
-(INPUTS, OSCILLATORS, FILTER, GATE, PAN, OUT), columns are the two hands, the
-signal runs down the left of each column and each control comes in from the
-right at the stage it drives.
+Two hands, two voices. The parent patch is small on purpose: a block of
+defaults at the top (fundamental, pinch min and max, resonance, size far and
+near — each a message fired by `loadbang` and sent by name), `udpreceive`,
+then `p left hand` and `p right hand`, summed into `ezdac~`. Double-click a
+hand to open it. Inside, one column read top to bottom:
 
-**Calibrate the pinch first.** It arrives in metres; the two SHARED boxes are
-the closed and open distances the sweep runs between (defaults 0.02 and 0.12).
-Read a hand's pinch readout with fingers touching, then wide apart, and type
-those in. `track-demo --swap-hands` if left and right come out reversed.
+| the hand does | the sound does | how |
+| --- | --- | --- |
+| is in the frame | fades in; leaves, fades out over 300 ms | `OSC-route /present` → `line~` → `*~` |
+| moves up and down | crossfades triangle (raised) ↔ saw (low) | wrist y → `line~` → `xfade~` |
+| pinches / opens thumb and index | lowpass sweeps 0–6 octaves above the fundamental | pinch (m) → `scale` → `expr 110.*pow(2., $f1)` → `line~` → `lores~` |
+| moves toward the camera | gets louder, -40 dB far to 0 dB near | palm `size` → `scale` → `dbtoa` → `line~` → `*~` |
+| moves left and right | pans | wrist x → `zmap` → `pan2` |
+
+The right hand is the same patch listening to `/cv/hand/right`, with
+`receive fund` → `* 1.5` before the oscillators: a fifth up.
+
+Three things need the package or the folder: `OSC-route` is from CNMAT
+Externals (Package Manager), `xfade~` is Dobrian's abstraction in this folder,
+and `pan2` is an example abstraction that ships inside Max 8 itself. An empty
+box in place of any of them is a missing dependency, not a broken patch.
+
+**Calibrate first.** Pinch arrives in metres, size in image units, and both
+depend on the hand and the camera. Defaults are 0.02–0.1 m for the pinch and
+0.1–0.3 for size. Read the values off a hand at the extremes — fingers touching
+and wide apart; arm's length and close to the camera — and type them into the
+messages at the top; they reach both hands by `send`. Outside the range is
+clipped, not extrapolated.
+
+**Why the waveform blend is hard to hear with the pinch closed:** the lowpass
+sits after the blend and strips exactly the harmonics that tell triangle from
+saw. Open the pinch and the difference is there. That's subtractive synthesis
+doing what it does, and worth pointing at.
+
+**Why `OSC-route` and not `route`.** Vanilla `route` matches the whole
+message selector, so `route /cv/hand/left` matches nothing sent to
+`/cv/hand/left/pinch`; splitting an address one level at a time needs
+CNMAT's object. (`cv-pinch-synth.maxpat` avoids the package by listing all
+the full addresses in one `route`, at the cost of a very wide box.)
 
 ## `xfade~`
 
