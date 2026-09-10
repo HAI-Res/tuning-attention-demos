@@ -74,6 +74,7 @@ Max loads depends on where the open patch is saved.
 | `qr.js` | draws the QR — no install, see below |
 | `vendor/qrcode-generator.js` | the QR encoder, MIT, committed so nothing needs fetching |
 | `poke.py` | drives every channel so the patch works with no phone |
+| `xfade~.maxpat` | Christopher Dobrian's two-signal crossfader abstraction, vendored so it clones with the repo — see below |
 | `attention-cv.maxpat` | separate pipeline's starter patch — a receiver, three taps, one worked example |
 | `cv.receive.maxpat` | receives attention-cv's pose/hand landmarks on UDP 7401, fans them out. Exactly one. |
 | `cv.channel.maxpat` | one tap: a landmark dropdown (pose + both hands) and its outlets |
@@ -407,6 +408,42 @@ Max. The `cv.receive.maxpat` / `cv.channel.maxpat` pair *in this folder* (port
 written for a `hand-demo` / `pose-demo` sender that was never committed
 anywhere, so as of 2026-09-09 nothing can drive it. Treat the next section as
 a design that lost, pending either deleting it or rewriting it against 7500.
+
+## `xfade~` — a crossfader that comes with the repo
+
+```
+[xfade~ 0.5]        inlets: signal A · signal B · crossfade 0–1 (float or signal)
+                    outlet: A·(1−x) + B·x
+```
+
+`xfade~.maxpat` is Christopher Dobrian's abstraction from the UC Irvine Max
+Cookbook, ["Abstraction for mixing or crossfading two audio signals"](https://music.arts.uci.edu/dobrian/maxcookbook/abstraction-mixing-or-crossfading-two-audio-signals),
+copied here unchanged (six objects: `sig~`, `-~`, two `*~`, `+~`) so that a
+`git clone` has it and nobody has to fetch anything. Its argument is the
+initial crossfade value, so `xfade~ 0.5` starts as an even mix; with no
+argument it starts fully on the left inlet. Feed the right inlet a signal —
+`line~`, or `pan2`'s output — for a smooth sweep, a float for a static mix.
+
+Two things to know:
+
+- **It is a linear crossfade**, gain `1−x` on one side and `x` on the other,
+  so the two gains always sum to one. That keeps the peak in check, but the
+  middle of the fade is about 3 dB quieter than the ends. The equal-power
+  version (gains `cos` and `sin` of `x·π/2`, as `pan2` does for panning) keeps
+  loudness level through the middle. Dobrian also publishes an
+  [S-curve variant](https://music.arts.uci.edu/dobrian/maxcookbook/abstraction-s-curve-crossfading)
+  with half-cosine gains that still sum to one; it is not vendored, but it is
+  the same six-object shape if wanted.
+- **Attribution and licence.** The Cookbook pages carry "Copyright 2017
+  Christopher Dobrian" and no explicit licence. It is a teaching resource
+  distributed for download, and this copy is for the same purpose; it is
+  credited here and in the file's own comment. If this repo's visibility
+  changes, that is the file to re-check, alongside the samples.
+
+Like every abstraction here, Max finds it from a patch saved in this folder, or
+from anywhere once the `~/Documents/Max 8/Library` symlink above is in place.
+A patch saved elsewhere — `patches/`, say, rather than `patches/max/` — gets
+an empty box until one of those is true.
 
 ## Pose and hand from the laptop camera (attention-cv), on a separate port
 
