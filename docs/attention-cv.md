@@ -1,5 +1,7 @@
 # attention-cv
 
+> Design write-up for the camera side, moved here from the root README of `HAI-Res/attention-cv`. Its Max notes are [`attention-cv-max.md`](attention-cv-max.md); the run sheet is the root [`README.md`](../README.md).
+
 Computer-vision experiments for the tuning-attention class. Live body / hand /
 face landmark tracking from the camera, with the display rate held to a fixed,
 comfortable cap.
@@ -172,7 +174,7 @@ second person in frame just starts arriving at `cv.pose.1.*` with no patch edit.
 `attention-phone`, and one UDP port takes one receiver — on separate ports both
 patches can be open at once.
 
-`patches/max/README.md` has the details, including which of the forty-one
+`docs/attention-cv-max.md` has the details, including which of the forty-one
 channels are actually worth mapping. With no camera to hand,
 `python3 patches/max/poke.py` drives every one of them.
 

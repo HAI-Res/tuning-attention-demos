@@ -1,5 +1,7 @@
 # attention-cv in Max
 
+> Long-form notes on the camera-side Max patches, moved from the `attention-cv` repo. `poke.py` there is `patches/max/cv-poke.py` here, because the phone side has a `poke.py` of its own.
+
 Vanilla Max 8 — no packages, no externals, no CNMAT odot, because this has to
 open on twenty students' stock installs.
 
@@ -78,8 +80,8 @@ always metres, and `size` is deliberately image units. The root `README.md` has 
 ## No camera at hand
 
 ```sh
-python3 patches/max/poke.py                  # all 43 channels, 10s
-python3 patches/max/poke.py 127.0.0.1:7500 60
+python3 patches/max/cv-poke.py                  # all 43 channels, 10s
+python3 patches/max/cv-poke.py 127.0.0.1:7500 60
 ```
 
 Stdlib only, so it runs without the project's venv — half the time you reach for

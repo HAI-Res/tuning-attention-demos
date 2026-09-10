@@ -1,35 +1,58 @@
 [project]
-name = "attention-phone"
-version = "0.1.0"
-description = "Phone sensors (accelerometer, gyro, attitude, …) streamed onto the laptop for the tuning-attention class. Companion to attention-cv."
+name = "tuning-attention-demos"
+version = "0.2.0"
+description = "Live demos for Tuning Attention (21M.369): phone sensors and laptop-camera hand/body tracking, into Max over OSC."
 readme = "README.md"
 authors = [
     { name = "Jon Myers", email = "jonmyers@mit.edu" }
 ]
 requires-python = ">=3.13"
 dependencies = [
-    # HTTP + WebSocket + TLS in one dependency, so the sender page, the
-    # Sensor Logger push endpoint and the socket all live on one port.
+    # attention_phone — the phone receiver. HTTP + WebSocket + TLS in one
+    # dependency, so the sender page, the Sensor Logger push endpoint and the
+    # socket all live on one port.
     "aiohttp>=3.10",
-    # Pure-python QR codes, no C deps: the only sane way to get 20 phones
-    # onto a URL like https://10-0-0-184.local-ip.sh:8443 in under a minute.
+    # Pure-python QR codes, no C deps: the only sane way to get 20 phones onto
+    # a URL like https://10-0-0-184.local-ip.sh:8443 in under a minute.
     "segno>=1.6",
+    "numpy>=2.0",
+]
+
+[project.optional-dependencies]
+# attention_cv — the camera. Kept optional because MediaPipe + OpenCV is
+# ~120 MB and the phone demo has no use for it:  uv sync --extra cv
+cv = [
+    # 1.0.x vision graphs crash on macOS arm64 with a Metal graph-service check
+    # (DrishtiMetalHelper / "Service is unavailable"), so stay on the 0.10.3x line.
+    "mediapipe>=0.10.30,<1.0",
+    "opencv-python>=4.10",
 ]
 
 [project.scripts]
+# phone
 phone-demo = "attention_phone.phone_demo:main"
 phone-cert = "attention_phone.certs:main"
 fake-phone = "attention_phone.fake_phone:main"
+# camera (need --extra cv)
+fetch-models = "attention_cv.models:main"
+track-demo = "attention_cv.track_demo:main"
+pose-demo = "attention_cv.pose_demo:main"
+osc-dump = "attention_cv.osc_dump:main"
 
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = ["attention_phone", "attention_cv"]
+
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
+    "pytest>=9.1.1",
     "pytest-asyncio>=0.24",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# tests/ and tests/cv/ each have a test_osc.py; importlib mode keeps them apart.
+addopts = "--import-mode=importlib"

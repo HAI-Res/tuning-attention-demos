@@ -1,5 +1,7 @@
 # attention-phone
 
+> This is the long-form design write-up for the phone side, moved here from the root README of the private `tuning-attention-class-demos` repo. Links to `ios/…` and `SURVEY.md` refer to that repo, where the Ductus app lives. The short version to run things from is the root [`README.md`](../README.md).
+
 Stream real phone sensors (accelerometer, gyro, attitude, compass) into
 sound, live, for *Tuning Attention* (21M.369).
 

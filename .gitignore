@@ -13,13 +13,15 @@ wheels/
 # to commit a TLS key, and it is re-downloaded automatically.
 certs/
 
-# Xcode
-ios/**/xcuserdata/
-ios/**/*.xcworkspace/xcuserdata/
-ios/**/DerivedData/
-ios/**/build/
-*.xcuserstate
-.claude/worktrees/
+.claude/
+
+# MediaPipe model bundles: fetched with `uv run fetch-models`, ~30 MB, not source.
+models/
+*.task
+
+# Camera recordings
+recordings/
+*.mp4
 
 # Audio used as source material — not ours to redistribute, and large.
 patches/max/*.wav

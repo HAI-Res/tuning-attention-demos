@@ -42,22 +42,11 @@ degrees). A channel's advertised unit must match what it actually emits:
 `audio`'s `onset` is an unbounded dB rise, and calling it `0–1` once caused a
 mapping-clipping bug that shipped as far as a submission archive.
 
-## Two names
+## Two names, three repos
 
-The toolkit, the Python package and the repo are **attention-phone**. The iOS
-app is **Ductus** all the way down: target, product, directory
-(`ios/Ductus/`), bundle id `com.chaparralstudios.ductus`, URL scheme
-`ductus://`, log subsystem `ductus`.
-
-The split is deliberate — the receiver takes any sender, and the app is only
-one of them. Note the bundle id is permanent from first upload onward: it was
-renamed on the day of registration precisely because that was the last moment
-it could be.
-
-## Before touching the Xcode project
-
-`ios/Ductus/project.yml` is the source of truth; run `xcodegen
-generate` after changing it, and never hand-edit the generated
-`.xcodeproj` — Xcode writing to it behind xcodegen's back is a known way to
-lose changes. `ios/README.md` holds the iOS traps worth reading before
-debugging anything on a phone.
+The toolkit is **attention-phone** / **attention-cv** and lives here. The iOS
+sender is **Ductus** (bundle id `com.chaparralstudios.ductus`, scheme
+`ductus://`) and lives with its App Store material in the private
+`HAI-Res/tuning-attention-class-demos` repo, not here — the receiver takes any
+sender, and the app is only one of them. This repo is the public, read-only
+handout: clone and use; changes land via the private repos.
