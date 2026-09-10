@@ -66,27 +66,22 @@ class Subject:
 def side_of(label: str, *, swap: bool = False) -> str:
     """MediaPipe's handedness label -> ``"left"`` / ``"right"``.
 
-    The label is used exactly as it comes, in **both** the mirrored and the
-    unmirrored case. That contradicts the advice you will find repeated
-    everywhere — that handedness assumes a selfie view and must be swapped for
-    an unmirrored image — so it was measured here rather than believed.
+    MediaPipe assigns handedness assuming it is looking at a *mirrored* (selfie)
+    image. This tracker mirrors the frame for display but hands the model the
+    frame as the camera shot it, so in the default view the label comes out
+    reversed: the person's right hand — on the right of the mirrored picture —
+    is reported as ``Left``. Measured live on 2026-09-10: with one hand raised,
+    the label ``left`` sat at x≈0.84 (right side of the mirrored view) and the
+    person confirmed it was their right hand.
 
-    On the same photo, run as-shot and again flipped, checking the hand label
-    against the *pose* model's own left/right wrist as ground truth::
+    So the caller swaps whenever the view is mirrored, and ``--swap-hands``
+    inverts whatever that default produced — for a camera already mirrored in
+    hardware, or a recording, where the labels land the other way round.
 
-        as-shot    hand Left  x=0.603   pose left_wrist  x=0.596   agree
-                   hand Right x=0.243   pose right_wrist x=0.248   agree
-        mirrored   hand Left  x=0.753   pose left_wrist  x=0.753   agree
-                   hand Right x=0.395   pose right_wrist x=0.409   agree
-
-    Both models get it anatomically right either way, because handedness comes
-    from the shape of the hand — which side the thumb is on, palm versus back —
-    not from where it sits in the frame. Flipping the image on top of that is
-    what puts every mapping on the wrong hand.
-
-    ``--swap-hands`` remains, because a camera that is already mirrored in
-    hardware would land you back in the other case and nobody should have to
-    edit source to fix it.
+    An earlier version of this docstring argued the label was right as it came,
+    on the evidence that it agreed with the pose model's left/right wrist. That
+    evidence was worthless: the pose model's left and right flip with the image
+    in exactly the same way, so the two agreed while both being wrong.
     """
     side = label.strip().lower()
     if side not in SIDES:
@@ -329,7 +324,9 @@ def main(argv: list[str] | None = None) -> int:
                     seen: dict[str, float] = {}
                     for i, lms in enumerate(r.hand_landmarks):
                         cat = r.handedness[i][0]
-                        side = side_of(cat.category_name, swap=args.swap_hands)
+                        # Labels assume a mirrored image, so the mirrored view needs
+                        # the swap; --swap-hands then inverts that default.
+                        side = side_of(cat.category_name, swap=(args.swap_hands != mirrored))
                         # Both hands occasionally come back with the same
                         # label; keep whichever the model was surer of rather
                         # than letting detection order decide.
