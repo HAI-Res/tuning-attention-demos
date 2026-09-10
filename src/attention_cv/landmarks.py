@@ -119,3 +119,25 @@ def visibility_of(landmarks: list) -> np.ndarray:
 def distance(points: np.ndarray, a: int, b: int) -> float:
     """Euclidean distance between two landmarks, in whatever space they are in."""
     return float(np.linalg.norm(points[a] - points[b]))
+
+
+def hand_size(norm: np.ndarray) -> float:
+    """Apparent size of a hand in the image: palm length, in image units.
+
+    The mean of wrist→index knuckle and wrist→middle knuckle, as full 3D
+    lengths in *image-normalised* space. Those two lengths are rigid — the
+    knuckles do not move relative to the wrist when the fingers curl or spread,
+    unlike the fingertips — so this changes for one reason only: how far the
+    hand is from the camera. Roughly ``size ∝ 1 / distance``, which makes it
+    the one number here that tracks camera distance, something neither model's
+    z reports (hand z is relative to the wrist, pose z to the hips).
+
+    Deliberately image space, not metres: in world space a palm is always the
+    same length, which is exactly the property a distance proxy must not have.
+    The z component is kept because a hand tilted towards the camera
+    foreshortens in x–y while its wrist-relative z grows, and the 3D length
+    largely cancels that.
+    """
+    idx = INDEX["hand"]
+    return 0.5 * (distance(norm, idx["wrist"], idx["index_mcp"])
+                  + distance(norm, idx["wrist"], idx["middle_mcp"]))

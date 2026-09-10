@@ -96,7 +96,10 @@ def main(argv: list[str]) -> int:
                             addr)
                 sock.sendto(encode(f"{base}/spread",
                                    0.06 + 0.03 * math.sin(ph * 0.9)), addr)
-                sent += 3
+                # A palm that approaches and retreats: 0.05 far, 0.25 near.
+                sock.sendto(encode(f"{base}/size",
+                                   0.15 + 0.10 * math.sin(ph * 0.5 + i)), addr)
+                sent += 4
 
             base = "/cv/pose/0"
             sock.sendto(encode(f"{base}/present", 1), addr)

@@ -94,6 +94,31 @@ def test_pinch_is_measured_in_world_space_not_image_space():
     assert expected != pytest.approx(L.distance(norm, idx["thumb_tip"], idx["index_tip"]))
 
 
+def test_size_is_measured_in_image_space_and_shrinks_with_distance():
+    # The opposite requirement to pinch: size exists to track camera distance,
+    # so it must come from the image-space landmarks and get smaller when the
+    # hand does. A far hand is a scaled-down copy of a near one in the image.
+    r = Recorder()
+    near, world = a_hand()
+    out(r).hands({"left": (near, world)})
+    near_size = r.by_address()["/cv/hand/left/size"][0]
+    assert near_size == pytest.approx(L.hand_size(near))
+
+    r = Recorder()
+    out(r).hands({"left": (near * 0.5, world)})      # same hand, twice as far
+    assert r.by_address()["/cv/hand/left/size"][0] == pytest.approx(near_size * 0.5)
+
+
+def test_size_uses_the_knuckles_not_the_fingertips():
+    # Curling a finger moves its tip, not its knuckle; size must not notice.
+    norm, world = a_hand()
+    idx = L.INDEX["hand"]
+    curled = norm.copy()
+    curled[idx["index_tip"]] = norm[idx["wrist"]]        # fingertip on the wrist
+    curled[idx["middle_tip"]] = norm[idx["wrist"]]
+    assert L.hand_size(curled) == pytest.approx(L.hand_size(norm))
+
+
 def test_bulk_none_still_sends_named_points():
     r = Recorder()
     norm, world = a_hand()
@@ -112,6 +137,7 @@ def test_named_off_still_sends_bulk():
     assert len(msgs["/cv/hand/left/world"]) == 63
     assert "/cv/hand/left/index_tip" not in msgs
     assert "/cv/hand/left/pinch" not in msgs
+    assert "/cv/hand/left/size" not in msgs
 
 
 def test_prefix_is_applied_everywhere():

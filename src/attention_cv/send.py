@@ -22,6 +22,7 @@ Address layout, with the default ``/cv`` prefix::
     /cv/hand/left/index_tip    3f  one named point
     /cv/hand/left/pinch        1f  thumb tip to index tip, metres
     /cv/hand/left/spread       1f  index tip to pinky tip, metres
+    /cv/hand/left/size         1f  palm length in image units — the camera-distance proxy
 
     /cv/pose/0/present         i
     /cv/pose/0/norm           99f  33 points, image space
@@ -33,9 +34,12 @@ Address layout, with the default ``/cv`` prefix::
 
 Named points carry **image space** by default (``--named-space world`` swaps
 it), because "where is this in the frame" is the usual question of a single
-point. The derived scalars are always **metres**, because a pinch has to mean
-the same thing at the back of the room as it does at the front, and only the
-world landmarks are scale-independent.
+point. The derived scalars are **metres**, because a pinch has to mean the
+same thing at the back of the room as it does at the front, and only the world
+landmarks are scale-independent — with one deliberate exception. ``size`` is the
+palm length in *image* units, precisely because it should shrink with distance:
+it is the only thing here that says how far the hand is from the camera, and a
+metric palm length would be constant. See :func:`landmarks.hand_size`.
 
 ``present`` is sent every frame for every side and body slot, whether or not
 anything was found. A channel that is off, a subject who left, and a crashed
@@ -123,6 +127,7 @@ class LandmarkOsc:
                        L.distance(world, idx["thumb_tip"], idx["index_tip"]))
             self._send(f"{base}/spread",
                        L.distance(world, idx["index_tip"], idx["pinky_tip"]))
+            self._send(f"{base}/size", L.hand_size(norm))
 
     # --- bodies ------------------------------------------------------------
 

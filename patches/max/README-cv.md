@@ -47,7 +47,7 @@ Copy a `cv.point` bpatcher as many times as you like. Outlets, left to right:
 
 A **bulk** channel — `norm`, `world`, `visibility` — puts its whole list on
 outlet 0 (63, 99 or 33 numbers) and only its first three on the axis outlets.
-A **scalar** channel — `pinch`, `spread`, `hands_apart`, `present` — arrives on
+A **scalar** channel — `pinch`, `spread`, `size`, `hands_apart`, `present` — arrives on
 outlet 0 as a one-element list and on outlet 1 as the number.
 
 The dropdown changes the channel live. What persists is the **object's
@@ -64,6 +64,7 @@ Forty-one of them arrive, and most mappings want three or four. The short list:
 | channel | why |
 | --- | --- |
 | `cv.hand.right.pinch` | thumb tip to index tip **in metres**. The most playable single number here — it means the same thing across the room as up close, because it comes from the metric landmarks rather than the picture. |
+| `cv.hand.right.size` | palm length **in image units**, wrist to knuckles. The only scalar that is *not* in metres, on purpose: it shrinks as the hand moves away, so it is the camera-distance proxy — map it to loudness for "closer is louder". Neither model's z does this: hand z is relative to the wrist (the wrist's own z is always 0), pose z to the hips. |
 | `cv.hand.right.index_tip` | where the fingertip is in the frame, x and y in 0–1. |
 | `cv.pose.0.center` | hip midpoint — the steadiest "where is this person" point there is. It barely moves when the arms do, and unlike the nose it does not vanish when someone turns around. |
 | `cv.pose.0.hands_apart` | wrist to wrist in metres. A whole-body gesture with one number. |
@@ -72,12 +73,12 @@ Forty-one of them arrive, and most mappings want three or four. The short list:
 Two coordinate spaces arrive for everything, and they are not interchangeable:
 `norm` is 0–1 across the image, `world` is metres from the hand centre or the
 hip midpoint. Named points carry `norm`; `pinch`, `spread` and `hands_apart` are
-always metres. The root `README.md` has the table.
+always metres, and `size` is deliberately image units. The root `README.md` has the table.
 
 ## No camera at hand
 
 ```sh
-python3 patches/max/poke.py                  # all 41 channels, 10s
+python3 patches/max/poke.py                  # all 43 channels, 10s
 python3 patches/max/poke.py 127.0.0.1:7500 60
 ```
 
@@ -183,5 +184,5 @@ data back: a scratch patch of `[r cv.hand.right.pinch] → [udpsend]` echoing to
 port `osc-dump` was listening on. `poke.py` in, the same values out, 26 Hz
 sustained — which is the whole chain, `udpreceive` → `cv.js` → `messnamed` →
 `[receive]`, and the one link that cannot be checked any other way. The receiver
-read `41 channel(s) 1066 msg/sec`, matching the 41 addresses the sender is known
-to produce.
+read `41 channel(s) 1066 msg/sec`, matching the 41 addresses the sender produced
+at the time (43 since `size` was added per hand).

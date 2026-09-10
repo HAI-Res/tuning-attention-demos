@@ -47,6 +47,7 @@ most mappings want four or five points rather than sixty-three.
 /cv/hand/left/index_tip    3f  one named point
 /cv/hand/left/pinch        1f  thumb tip to index tip, metres
 /cv/hand/left/spread       1f  index tip to pinky tip, metres
+/cv/hand/left/size         1f  palm length in image units — shrinks with distance
 
 /cv/pose/0/present         i
 /cv/pose/0/norm           99f  33 points, image space
@@ -87,7 +88,13 @@ someone is standing. Named points carry `norm` by default
 
 Yes, it is real 3D, with the honest caveat that a single camera infers depth
 rather than measuring it. Relative depth within a hand is good; absolute
-distance from the camera is not something either model reports.
+distance from the camera is not something either model reports. In
+particular the hand's *wrist* z is always zero — it is the origin of the hand
+model's depth — and the pose model's z is measured from the hips, so it says
+how far an arm is reaching, not how far away the person is (measured live,
+2026-09-10). The proxy for camera distance is `size`: the palm length in
+image units, which shrinks roughly as 1 / distance. It is the one derived
+scalar sent in image space rather than metres, for exactly that reason.
 
 ### What it costs
 
