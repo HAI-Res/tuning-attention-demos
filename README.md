@@ -1,8 +1,8 @@
 # tuning-attention-demos
 
 Two live demos for *Tuning Attention* (21M.369): a phone's motion sensors into
-Max, and a laptop camera's hand and body tracking into Max. Vanilla Max 8 for
-the patches; Python only for the camera and for optional phone tools.
+Max, and a laptop camera's hand and body tracking into Max. Vanilla Max 8 or 9
+for the patches; Python only for the camera and for optional phone tools.
 
 This repo is a read-only handout — clone it and use it.
 
@@ -10,8 +10,8 @@ This repo is a read-only handout — clone it and use it.
 
 | | for | where |
 | --- | --- | --- |
-| **Max 8** | everything | cycling74.com; the free 30-day trial is enough for the term's demos |
-| **CNMAT Externals** package | the camera patch (`OSC-route`) | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
+| **Max 8 or 9** | everything | cycling74.com; the free 30-day trial is enough for the term's demos |
+| **CNMAT Externals** package | the camera patch only (`OSC-route`) — the phone demo needs no package | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
 | **git** and **uv** | the camera | `brew install git uv`, or [uv's installer](https://docs.astral.sh/uv/) |
 | a webcam | the camera | the laptop's own is fine |
 | a phone | the phone demo | any phone's browser, via the QR in the patch; or the **Ductus** iOS app (App Store), which adds AirPods head motion |
@@ -24,11 +24,13 @@ crossfader — is fetched by the steps below or is already in this repo.
 ```sh
 git clone https://github.com/HAI-Res/tuning-attention-demos.git
 cd tuning-attention-demos
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention   # Max 8
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max 9
 ```
 
-Then restart Max — it scans its search path at launch. Without the link,
-patches open with empty boxes where the bpatchers and abstractions should be.
+Use the line for the Max you have (both is harmless). Then restart Max — it
+scans its search path at launch. Without the link, patches open with empty
+boxes where the bpatchers and abstractions should be.
 
 For the camera:
 

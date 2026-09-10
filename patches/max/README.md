@@ -1,15 +1,16 @@
 # Max patches
 
 Two sources into Max: a phone's sensors (UDP 7400) and a laptop camera's hand
-tracking (UDP 7500). The phone patches are vanilla Max 8; the camera class
-patch additionally needs the **CNMAT Externals** package (for `OSC-route`) from
-Max's Package Manager. One receiver per source may be open at a time; the two
+tracking (UDP 7500). The phone patches are vanilla Max 8 or 9, nothing to
+install; only the camera class patch additionally needs the **CNMAT
+Externals** package (for `OSC-route`) from Max's Package Manager. One receiver per source may be open at a time; the two
 sources can run together.
 
 ## Setup (once per machine)
 
 ```sh
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention   # Max 8
+ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max 9
 ```
 
 Restart Max — it only scans its search path at launch. Without this, patches
