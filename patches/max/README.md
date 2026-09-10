@@ -15,10 +15,10 @@ ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max
 Restart Max — it only scans its search path at launch. Without this, patches
 open with empty boxes instead of the bpatchers they need.
 
-## Phone: `phone-gyroscope-demo.maxpat`
+## Demo 1 — phone: `demo 1.maxpat`
 
 ```sh
-open patches/max/phone-gyroscope-demo.maxpat
+open "patches/max/demo 1.maxpat"
 ```
 
 Point the phone's camera at the QR code. It opens a web page on the class
@@ -65,12 +65,12 @@ are `accel`, `gravity`, `gyro`, `attitude`, `accelg`, `heading`, `location`,
 two seconds and the rate readouts are damped: flicker at 60 Hz is a migraine
 and vestibular trigger. The data path is untouched — taps get every sample.
 
-## Camera: `cv-synth.maxpat`
+## Demo 2 — camera: `demo 2.maxpat`
 
 ```sh
 uv sync && uv run fetch-models                     # once; MediaPipe is ~120 MB of it
 uv run track-demo --track hands --dim 0 --osc max   # hands only, black background, OSC on UDP 7500
-open patches/max/cv-synth.maxpat
+open "patches/max/demo 2.maxpat"
 ```
 
 Two hands, two voices. The parent patch is small on purpose: a block of

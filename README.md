@@ -46,7 +46,7 @@ built-in `route` cannot).
 ## Phone → Max
 
 ```sh
-open patches/max/phone-gyroscope-demo.maxpat
+open "patches/max/demo 1.maxpat"
 ```
 
 Point the phone's camera at the QR code in the patch. It opens a web page on
@@ -76,7 +76,7 @@ build your own mapping from the same pieces:
 
 ```sh
 uv run track-demo --track hands --dim 0 --osc max   # hands only, black background, OSC on UDP 7500
-open patches/max/cv-synth.maxpat                    # two hands, two voices
+open "patches/max/demo 2.maxpat"                    # two hands, two voices
 ```
 
 Each hand is a voice. Pinch opens a lowpass filter, hand height blends between
