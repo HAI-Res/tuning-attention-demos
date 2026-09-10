@@ -46,13 +46,13 @@ built-in `route` cannot).
 ## Phone → Max
 
 ```sh
-open patches/max/attention-phone.maxpat
+open patches/max/phone-gyroscope-demo.maxpat
 ```
 
 Point the phone's camera at the QR code in the patch. It opens a web page on
 the class server (`ductus-web-app.csail.mit.edu`) keyed to *your* laptop —
 the five-letter **room** shown in the receiver — and your phone's sensors
-appear in your Max. Nothing to install on the phone, and the laptop only
+appear in your Max. Turn the phone and the sample scrubs and pitches with it. Nothing to install on the phone, and the laptop only
 needs Max: the receiver pulls your room down from the server through a script
 bundled with Max. Works on any wifi, because both ends only make outbound
 connections.
@@ -67,10 +67,10 @@ scan again: the app sends OSC straight to Max over the LAN, at 100 Hz, and
 reaches AirPods head motion, which no browser can. The first packet triggers
 an iOS *Local Network* prompt; nothing arrives until you allow it.
 
-**Then try `phone-gyroscope-demo.maxpat`**: turn the phone and a sample scrubs
-and pitches with it. That is the quickest way to confirm the phone is really
-connected. It wants a `tudor.wav` in `patches/max/` — drop in any `.wav` under
-that name, it is deliberately not committed.
+The patch wants a `tudor.wav` in `patches/max/` — drop in any `.wav` under
+that name, it is deliberately not committed. How the patch works, and how to
+build your own mapping from the same pieces:
+[`patches/max/README.md`](patches/max/README.md).
 
 ## Camera → Max
 
@@ -89,18 +89,14 @@ to your own hand — the readouts and the boxes to type into are described in
 If your left hand drives the right-hand voice, add `--swap-hands`. Drop
 `--dim 0` to see yourself; `d` and `t` cycle the view while it runs.
 
-`attention-cv.maxpat` is the plainer starter with a receiver and taps for
-building your own mapping, and `cv-pinch-synth.maxpat` is an earlier,
-package-free version of the same idea laid out as one flat grid.
-
 ## If it's not working
 
 | symptom | first thing to try |
 | --- | --- |
 | empty boxes in a patch | the `ln -sfn` above, then restart Max; an empty `OSC-route` means the CNMAT package isn't installed |
 | phone (web page): nothing arrives | the receiver's status line should read "connected to ductus-web-app.csail.mit.edu · room …"; the phone's page shows the same room. If the relay gave up, send it a `bang`. `https://ductus-web-app.csail.mit.edu/health` lists every live phone |
-| phone (app): nothing arrives | `python3 patches/max/poke.py` — patch or phone? Then Local Network permission, then port 7400 |
-| camera: nothing arrives | `python3 patches/max/cv-poke.py`; or quit Max and `uv run osc-dump 7500` |
+| phone (app): nothing arrives | Local Network permission, then port 7400 on both ends |
+| camera: nothing arrives | quit Max and `uv run osc-dump 7500` — if nothing prints, the problem is before Max |
 | app on class wifi refuses | client isolation blocks phone→laptop OSC; use the web page (menu under the QR), which goes through the server |
 | two patches fight | only one receiver per port may be open — one phone patch, one camera patch |
 
@@ -108,12 +104,11 @@ package-free version of the same idea laid out as one flat grid.
 
 | path | what |
 | --- | --- |
-| `patches/max/` | every Max patch, both sources, and the run sheet |
-| `src/attention_phone/` | the phone receiver, browser sender page, and diagnostics |
+| `patches/max/` | the two demos, the pieces they are built from, and the run sheet |
 | `src/attention_cv/` | the camera tracker and its OSC sender |
-| `docs/` | the long-form design notes for each half; `docs/hosting.md` is the class server |
-| `deploy/` | how the class server is run — not needed to use the demos |
+| `src/attention_phone/` | the phone receiver and web page — what runs on the class server; only needed here for the "this laptop" option |
 | `tests/` | `uv run pytest` |
 
-The iOS app's source and the course's research code live in other repos; this
-one is only what is needed to run the demos.
+The iOS app's source, the class server's deployment, the long-form design
+notes and the course's research code live in other repos; this one is only
+what is needed to run the demos.

@@ -1,10 +1,9 @@
 # Max patches
 
-Two sources into Max: a phone's sensors (UDP 7400) and a laptop camera's hand
-tracking (UDP 7500). The phone patches are vanilla Max 8 or 9, nothing to
-install; only the camera class patch additionally needs the **CNMAT
-Externals** package (for `OSC-route`) from Max's Package Manager. One receiver per source may be open at a time; the two
-sources can run together.
+Two demos, one per source: a phone's sensors and a laptop camera's hand
+tracking. Vanilla Max 8 or 9. The phone demo needs nothing installed; the
+camera demo needs the **CNMAT Externals** package (for `OSC-route`) from
+Max's Package Manager.
 
 ## Setup (once per machine)
 
@@ -16,82 +15,61 @@ ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max
 Restart Max — it only scans its search path at launch. Without this, patches
 open with empty boxes instead of the bpatchers they need.
 
-## Phone → Max
+## Phone: `phone-gyroscope-demo.maxpat`
 
 ```sh
-open patches/max/attention-phone.maxpat
+open patches/max/phone-gyroscope-demo.maxpat
 ```
 
-Point the phone's camera at the QR code in the patch. By default it opens a
-web page on the class server keyed to this laptop's **room** (the five-letter
-code in the receiver), and the phone's sensors arrive here through the
-receiver's relay — nothing to install. The menu under the code switches to the
-**Ductus app** link (OSC straight to Max over the LAN; the first packet
-triggers an iOS **Local Network** prompt) or to a page served from this laptop
-(needs `uv run phone-demo --osc 127.0.0.1:7400` running). The long version:
-[`docs/attention-phone-max.md`](../../docs/attention-phone-max.md).
+Point the phone's camera at the QR code. It opens a web page on the class
+server keyed to this laptop's **room** — the five-letter code shown in the
+receiver block — and the phone's sensors arrive here through the receiver's
+relay. Tap **Start** on the page and allow motion access. Nothing to install on
+either side; both ends only make outbound connections, so it works on any
+wifi.
 
-No phone handy? `python3 patches/max/poke.py` fakes one so you can check the
-patch itself works.
+Turning the phone then scrubs and pitches a sample: the gyro's rotation rate,
+in turns per second, is the `groove~` playback speed. The two `svf~ 10.`
+objects are high-passes that strip the DC a nearly-stopped `groove~` produces.
+The patch wants a file named `tudor.wav` in this folder — deliberately not
+committed — so drop any `.wav` in under that name, or edit the `buffer~`.
 
-**Only one patch with a receiver can be open at a time** (`attention-phone.maxpat`,
-`attention-phone-monitor.maxpat`, `phone-gyroscope-demo.maxpat` each embed one,
-and all three fight over UDP 7400).
+The menu under the QR has two more targets. **Ductus app**: the native iOS
+app's link, which sends OSC straight to Max over the LAN at 100 Hz and also
+reaches AirPods head motion; the first packet triggers an iOS *Local Network*
+prompt. **Web page — this laptop**: a page served from your own machine, for a
+LAN with no internet; needs `uv run phone-demo --osc 127.0.0.1:7400` running.
 
-## Files
+**Only one patch with a receiver may be open at a time.** A second one both
+fights for UDP 7400 and pulls the same room a second time, so every message
+arrives twice.
+
+### The pieces
 
 | file | what it is |
 | --- | --- |
-| `attention-phone.maxpat` | starter patch: receiver, three taps, one worked example |
-| `attention-phone-monitor.maxpat` | every channel, with arrival rates |
-| `ap.receive.maxpat` | the receiver — socket + phone chooser |
-| `ap.qr.maxpat` | the QR code, paste one into any patch |
-| `ap.channel.maxpat` | a tap: channel dropdown + outlets |
-| `poke.py` | fakes a phone for testing without one |
-| `phone-gyroscope-demo.maxpat` | class demo — see below |
-| `attention-cv.maxpat` | camera starter patch: receiver, three taps, one worked example |
-| `cv.receive.maxpat` | the camera receiver — socket on UDP 7500, throughput, channel list |
-| `cv.point.maxpat` | a camera tap: channel dropdown + outlets |
-| `cv.js` | splits camera OSC addresses for the receiver; must stay beside the patches |
-| `cv-poke.py` | fakes the camera for testing without one |
-| `cv-synth.maxpat` | **the class demo** — two hands, two voices, each a subpatcher; see below |
-| `cv-pinch-synth.maxpat` | the same idea as one flat grid, no packages needed; kept for comparison |
-| `xfade~.maxpat` | Christopher Dobrian's crossfader, vendored; see below |
+| `ap.receive.maxpat` | the receiver: the socket, the phone chooser, the room key and relay |
+| `ap.qr.maxpat` | the code to scan, with the target menu; paste one into any patch |
+| `ap.channel.maxpat` | a tap: pick a channel from the dropdown; outlets are the whole reading, axis 1–4, magnitude |
+| `attention-phone.js` | splits OSC addresses and keeps the display slow — see below |
+| `relay.js` `wsclient.js` `server-config.js` | the relay that pulls this laptop's room from the class server; the server's address is the one line in `server-config.js` |
+| `address.js` `qr.js` `vendor/` | this Mac's address and the QR image, via Node for Max; nothing fetched |
 
-## Using a tap
+To build your own mapping, copy an `ap.channel` bpatcher into your patch
+alongside an `ap.receive`, lock the patch (⌘E) and pick a channel from its
+dropdown. `[ap.channel ap.gyro]` typed as a plain object works too. Channels
+are `accel`, `gravity`, `gyro`, `attitude`, `accelg`, `heading`, `location`,
+`audio` from the web page, and nine more from the app.
 
-Copy an `ap.channel` bpatcher, lock the patch (⌘E), pick a channel from its
-dropdown. Outlets: whole reading · axis 1–4 · magnitude. `[ap.channel ap.gyro]`
-typed directly also works, no dropdown needed.
+**Nothing on screen updates at sensor rate.** Values shown are averaged over
+two seconds and the rate readouts are damped: flicker at 60 Hz is a migraine
+and vestibular trigger. The data path is untouched — taps get every sample.
 
-## Class demo: `phone-gyroscope-demo.maxpat`
-
-Gyro rotation rate drives `groove~` playback speed through a resonant filter
-— turning the phone scrubs/pitches the sample. Needs a file named
-`tudor.wav` in this folder; it's intentionally not committed (source audio,
-not ours to redistribute), so drop your own `.wav` there and rename it, or
-edit the `buffer~ tudor tudor.wav` object to point elsewhere.
-
-## Camera → Max
+## Camera: `cv-synth.maxpat`
 
 ```sh
 uv sync && uv run fetch-models                     # once; MediaPipe is ~120 MB of it
 uv run track-demo --track hands --dim 0 --osc max   # hands only, black background, OSC on UDP 7500
-open patches/max/attention-cv.maxpat               # receiver, three taps, a worked example
-```
-
-`cv.point` taps work like `ap.channel`: copy one, lock the patch, pick a
-channel. Scalars worth knowing: `cv.hand.right.pinch` (thumb to index tip,
-metres), `cv.hand.right.size` (palm length in image units — the only thing
-that tracks distance from the camera), `cv.pose.0.center` (hip midpoint),
-`cv.*.present` (1 while tracked). Rationale and the full channel list:
-[`docs/attention-cv-max.md`](../docs/attention-cv-max.md).
-
-No camera handy? `python3 patches/max/cv-poke.py` fakes one.
-
-## Class demo: `cv-synth.maxpat`
-
-```sh
 open patches/max/cv-synth.maxpat
 ```
 
@@ -110,11 +88,12 @@ hand to open it. Inside, one column read top to bottom:
 | moves left and right | pans | wrist x → `zmap` → `pan2` |
 
 The right hand is the same patch listening to `/cv/hand/right`, with
-`receive fund` → `* 1.5` before the oscillators: a fifth up.
+`receive fund` → `* 1.5` before the oscillators: a fifth up. If your left hand
+drives the right-hand voice, add `--swap-hands` to `track-demo`.
 
 Three things need the package or the folder: `OSC-route` is from CNMAT
 Externals (Package Manager), `xfade~` is Dobrian's abstraction in this folder,
-and `pan2` is an example abstraction that ships inside Max 8 itself. An empty
+and `pan2` is an example abstraction that ships inside Max itself. An empty
 box in place of any of them is a missing dependency, not a broken patch.
 
 **Calibrate first.** Pinch arrives in metres, size in image units, and both
@@ -132,25 +111,33 @@ doing what it does, and worth pointing at.
 **Why `OSC-route` and not `route`.** Vanilla `route` matches the whole
 message selector, so `route /cv/hand/left` matches nothing sent to
 `/cv/hand/left/pinch`; splitting an address one level at a time needs
-CNMAT's object. (`cv-pinch-synth.maxpat` avoids the package by listing all
-the full addresses in one `route`, at the cost of a very wide box.)
+CNMAT's object.
 
-## `xfade~`
+### `xfade~`
 
-Dobrian's two-signal crossfader from the UC Irvine Max Cookbook, vendored
-unchanged so a clone has it: inlets signal A, signal B, crossfade 0–1 (float or
-signal); outlet `A·(1−x) + B·x`. Linear, so the middle is ~3 dB down; the
-equal-power version is `cos`/`sin` of `x·π/2`, which is what the pinch synth
-and `pan2` do. Source and licence note:
-[`docs/attention-phone-max.md`](../docs/attention-phone-max.md#xfade--a-crossfader-that-comes-with-the-repo).
+Dobrian's two-signal crossfader from the
+[UC Irvine Max Cookbook](https://music.arts.uci.edu/dobrian/maxcookbook/abstraction-mixing-or-crossfading-two-audio-signals),
+vendored unchanged so a clone has it: inlets signal A, signal B, crossfade 0–1
+(float or signal); outlet `A·(1−x) + B·x`. Linear, so the middle is ~3 dB down.
+Copyright Christopher Dobrian, distributed as a teaching resource; credited
+here and in the file.
+
+## Why there is a `js` in the phone receiver
+
+Max's `udpreceive` decodes OSC itself and hands the address over as the message
+selector: `/phone/ada/accel 0.1 0.2 9.8` arrives as a message named
+`/phone/ada/accel`. A student types their own name, so the middle part is not
+known until it arrives, and `route` cannot take its arguments at runtime.
+`attention-phone.js` splits the address and re-emits the values under the
+channel name, and publishes every phone under `ap.<name>.<channel>` so a tap
+can be pinned to one person: `[ap.channel ap.ada.gyro]`. The `.js` files must
+stay beside the patches; Max looks for them in the patch's own folder.
 
 ## If nothing arrives
 
-1. Local Network permission not granted yet, or the app reset after a rebuild.
-2. Port mismatch — app and Max must both be on 7400.
-3. Wifi client isolation blocks phone→laptop traffic; nothing on the laptop
-   fixes this.
-
-Run `python3 patches/max/poke.py` (phone) or `cv-poke.py` (camera) first — it
-tells you in five seconds whether the problem is the patch or the source. For
-the camera, `uv run osc-dump 7500` with Max closed shows what is arriving.
+| | first thing to check |
+| --- | --- |
+| phone | the receiver's status line: it should read "connected to ductus-web-app.csail.mit.edu · room …", and the phone's page shows the same room. `https://ductus-web-app.csail.mit.edu/health` lists every live phone. If the relay gave up, send it a `bang`. |
+| phone, app path | the *Local Network* prompt; then the port — app and Max both on 7400; then wifi client isolation, which blocks phone→laptop OSC (the web page is the way round it) |
+| camera | quit Max and `uv run osc-dump 7500` — if nothing prints, the problem is before Max |
+| any patch | empty boxes mean the setup symlink is missing or Max was not restarted; an empty `OSC-route` means the CNMAT package is not installed |
