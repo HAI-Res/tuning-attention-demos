@@ -5,15 +5,19 @@ tracking. Vanilla Max 8 or 9. The phone demo needs nothing installed; the
 camera demo needs the **CNMAT Externals** package (for `OSC-route`) from
 Max's Package Manager.
 
-## Setup (once per machine)
+## Setup
+
+None, if you open the two demos from this folder: Max searches the folder of
+the open patch, and everything they load is in here beside them.
+
+Optional, for patches saved elsewhere that want `ap.channel`, `xfade~` and the
+rest: put this folder on Max's search path with a link, then restart Max (it
+only scans the path at launch). Keep the quotes — the folder name has a space.
 
 ```sh
 ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 8/Library/tuning-attention"   # Max 8
 ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 9/Library/tuning-attention"   # Max 9
 ```
-
-Restart Max — it only scans its search path at launch. Without this, patches
-open with empty boxes instead of the bpatchers they need.
 
 ## 1. Phone: `1. phone-gyroscope-demo.maxpat`
 
