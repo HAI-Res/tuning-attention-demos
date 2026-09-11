@@ -12,13 +12,48 @@ This repo is a read-only handout — clone it and use it.
 | --- | --- | --- |
 | **Max 8 or 9** | everything | cycling74.com; the free 30-day trial is enough for the term's demos |
 | **CNMAT Externals** package | the camera patch only (`OSC-route`) — the phone demo needs no package | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
-| **uv** | the camera | its own installer: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"`). Homebrew users can `brew install uv` instead |
-| **git** | getting this repo | already on a Mac once Apple's command-line tools are installed — running `git` offers to install them, or `xcode-select --install`. Or skip git: GitHub's **Code → Download ZIP** gives the same folder |
+| **uv** | the camera | see *Installing uv and git* below — no Homebrew needed |
+| **git** | getting this repo | optional — **Code → Download ZIP** on GitHub works too |
 | a webcam | the camera | the laptop's own is fine |
 | a phone | the phone demo | any phone's browser, via the QR in the patch; or the **Ductus** iOS app (App Store), which adds AirPods head motion |
 
 Everything else — the Python packages, the tracking models, Dobrian's `xfade~`
 crossfader — is fetched by the steps below or is already in this repo.
+
+## Installing uv and git
+
+No Homebrew or other package manager is assumed. Everything here is a
+one-liner from the tool's own site, and the same on every platform.
+
+**macOS.** In Terminal:
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh      # uv
+git --version                                        # git: accept the prompt to install Apple's command-line tools
+```
+
+Then close and reopen Terminal so `uv` is on the path. (Homebrew users may
+prefer `brew install uv git`; same result.)
+
+**Windows.** Max runs on Windows and so does everything here. In PowerShell:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"   # uv
+winget install Git.Git                                                                # git, or the installer at git-scm.com
+```
+
+Then open a new PowerShell window. Where this README says `open "…maxpat"`,
+double-click the file instead, and read `patches/max` as `patches\max`. The
+optional search-path link below is Mac-only; the Windows equivalent is Max's
+Options → File Preferences → add the `patches\max` folder. The camera side
+uses OpenCV's default backend off macOS; the tracker was written and tested on
+a Mac, so if the camera does not open on Windows, `uv run track-demo
+--list-cameras` and `--camera 1` are the first things to try.
+
+**Linux.** Same `curl` line for uv; git from your distribution
+(`sudo apt install git`). Max does not run on Linux, so only the camera sender
+is useful there — pointed at a Mac or Windows machine running Max with
+`--osc <that machine's IP>:7500`.
 
 ## Setup, once per machine
 
