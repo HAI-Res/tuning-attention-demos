@@ -12,7 +12,8 @@ This repo is a read-only handout — clone it and use it.
 | --- | --- | --- |
 | **Max 8 or 9** | everything | cycling74.com; the free 30-day trial is enough for the term's demos |
 | **CNMAT Externals** package | the camera patch only (`OSC-route`) — the phone demo needs no package | in Max: File → Show Package Manager, search "CNMAT Externals", Install |
-| **git** and **uv** | the camera | `brew install git uv`, or [uv's installer](https://docs.astral.sh/uv/) |
+| **uv** | the camera | its own installer: `curl -LsSf https://astral.sh/uv/install.sh \| sh` (Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 \| iex"`). Homebrew users can `brew install uv` instead |
+| **git** | getting this repo | already on a Mac once Apple's command-line tools are installed — running `git` offers to install them, or `xcode-select --install`. Or skip git: GitHub's **Code → Download ZIP** gives the same folder |
 | a webcam | the camera | the laptop's own is fine |
 | a phone | the phone demo | any phone's browser, via the QR in the patch; or the **Ductus** iOS app (App Store), which adds AirPods head motion |
 
