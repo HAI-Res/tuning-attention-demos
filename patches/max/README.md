@@ -8,8 +8,8 @@ Max's Package Manager.
 ## Setup (once per machine)
 
 ```sh
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention   # Max 8
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max 9
+ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 8/Library/tuning-attention"   # Max 8
+ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 9/Library/tuning-attention"   # Max 9
 ```
 
 Restart Max — it only scans its search path at launch. Without this, patches

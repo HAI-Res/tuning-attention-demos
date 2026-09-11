@@ -25,13 +25,24 @@ crossfader — is fetched by the steps below or is already in this repo.
 ```sh
 git clone https://github.com/HAI-Res/tuning-attention-demos.git
 cd tuning-attention-demos
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 8/Library/tuning-attention   # Max 8
-ln -sfn "$(pwd)/patches/max" ~/Documents/Max\ 9/Library/tuning-attention   # Max 9
 ```
 
-Use the line for the Max you have (both is harmless). Then restart Max — it
-scans its search path at launch. Without the link, patches open with empty
-boxes where the bpatchers and abstractions should be.
+(or unzip the **Code → Download ZIP** folder and `cd` into it). That's all
+Max needs: open the two demo patches from `patches/max` and everything they
+load is in that folder beside them.
+
+**Optional — only if you want to use these pieces in patches saved elsewhere**
+(your own patch that types `ap.channel` or `xfade~` into a box), put the folder
+on Max's search path with a link, then restart Max:
+
+```sh
+ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 8/Library/tuning-attention"   # Max 8
+ln -sfn "$(pwd)/patches/max" "$HOME/Documents/Max 9/Library/tuning-attention"   # Max 9
+```
+
+Keep the quotes — the folder name has a space in it, and `ln: 8: No such file
+or directory` means the shell split it in two. The `Library` folder exists once
+Max has been launched at least once.
 
 For the camera:
 
@@ -95,7 +106,7 @@ If your left hand drives the right-hand voice, add `--swap-hands`. Drop
 
 | symptom | first thing to try |
 | --- | --- |
-| empty boxes in a patch | the `ln -sfn` above, then restart Max; an empty `OSC-route` means the CNMAT package isn't installed |
+| empty boxes in a patch | open the demos from inside `patches/max`, or do the optional link above and restart Max; an empty `OSC-route` means the CNMAT package isn't installed |
 | phone (web page): nothing arrives | the receiver's status line should read "connected to ductus-web-app.csail.mit.edu · room …"; the phone's page shows the same room. If the relay gave up, send it a `bang`. `https://ductus-web-app.csail.mit.edu/health` lists every live phone |
 | phone (app): nothing arrives | Local Network permission, then port 7400 on both ends |
 | camera: nothing arrives | quit Max and `uv run osc-dump 7500` — if nothing prints, the problem is before Max |
