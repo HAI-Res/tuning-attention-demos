@@ -114,10 +114,9 @@ scan again: the app sends OSC straight to Max over the LAN, at 100 Hz, and
 reaches AirPods head motion, which no browser can. The first packet triggers
 an iOS *Local Network* prompt; nothing arrives until you allow it.
 
-The patch wants a `tudor.wav` in `patches/max/` — drop in any `.wav` under
-that name, it is deliberately not committed. How the patch works, and how to
-build your own mapping from the same pieces:
-[`patches/max/README.md`](patches/max/README.md).
+The sample it plays, `tudor.mp3`, is in `patches/max` and loads with the
+patch. To try another sound, click **replace** in the patch and pick any audio
+file, or drop your own file in that folder and rename it `tudor.mp3`.
 
 ## Camera → Max
 

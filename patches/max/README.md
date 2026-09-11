@@ -35,8 +35,9 @@ wifi.
 Turning the phone then scrubs and pitches a sample: the gyro's rotation rate,
 in turns per second, is the `groove~` playback speed. The two `svf~ 10.`
 objects are high-passes that strip the DC a nearly-stopped `groove~` produces.
-The patch wants a file named `tudor.wav` in this folder — deliberately not
-committed — so drop any `.wav` in under that name, or edit the `buffer~`.
+The sample, `tudor.mp3`, sits in this folder and is loaded by the `buffer~` when
+the patch opens. **replace** opens a file dialog for any other sound; `buffer~`
+reads MP3, AAC, WAV and AIFF alike.
 
 The menu under the QR has two more targets. **Ductus app**: the native iOS
 app's link, which sends OSC straight to Max over the LAN at 100 Hz and also
